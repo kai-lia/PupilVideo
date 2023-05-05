@@ -1,0 +1,8 @@
+imreg-dft
+matplotlib
+moderngl
+numpy
+pillow
+scikit-image
+scipy
+matplotlib
