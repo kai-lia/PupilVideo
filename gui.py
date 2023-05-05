@@ -48,22 +48,22 @@ class ProjectorGUI:
         self.PupilTracker = None
 
         # Create top, left, middle, and right frames formatting
-        top_frame = tk.Frame(self.tk_root, bg="orange")
+        top_frame = tk.Frame(self.tk_root)
         top_frame.pack(side="top", fill="both")
         self.make_top_frame(top_frame)
 
         # left
-        left_frame = tk.Frame(self.tk_root, bg="blue")
+        left_frame = tk.Frame(self.tk_root)
         left_frame.pack(side="left", expand=True, fill='both')
         self.make_left_frame(left_frame)
 
         #middle
-        middle_frame = tk.Frame(self.tk_root, bg="yellow")
+        middle_frame = tk.Frame(self.tk_root)
         middle_frame.pack(side="left", expand=True, fill='both')
         self.make_middle_frame(middle_frame)
 
         # right
-        right_frame = tk.Frame(self.tk_root,  bg="brown")
+        right_frame = tk.Frame(self.tk_root)
         right_frame.pack(side="left", expand=True, fill='both')
         self.make_right_frame(right_frame)
 
@@ -94,7 +94,7 @@ class ProjectorGUI:
         self.tk_save_video_button.pack(expand=True)
 
         ## save video settings
-        save_video_frame = tk.Frame(left_frame, bg="orange", highlightbackground="black", highlightthickness=2)
+        save_video_frame = tk.Frame(left_frame, highlightbackground="black", highlightthickness=2)
         save_video_frame.pack(side="top", expand=True, fill='both')
         self.tk_save_video_settings_label = tk.Label(save_video_frame, text="Save Video Settings")
         self.tk_save_video_settings_label.pack(side="top")
@@ -133,7 +133,7 @@ class ProjectorGUI:
     def make_right_frame(self, right_frame):
         # right
         ##video camera settings
-        video_camera_frame = tk.Frame(right_frame, bg="orange", highlightbackground="black", highlightthickness=2)
+        video_camera_frame = tk.Frame(right_frame, highlightbackground="black", highlightthickness=2)
         video_camera_frame.pack(side="top", expand=True, fill='both')
 
         self.tk_video_camera_settings_label = tk.Label(video_camera_frame, text="Video Camera Settings")
@@ -188,7 +188,7 @@ class ProjectorGUI:
 
 
         ##calibration settings
-        calibration_frame = tk.Frame(right_frame, bg="orange", highlightbackground="black", highlightthickness=2)
+        calibration_frame = tk.Frame(right_frame, highlightbackground="black", highlightthickness=2)
         calibration_frame.pack(side="top", expand=True, fill='both')
 
         self.tk_calibration_label = tk.Label(calibration_frame, text="Calibration Settings")
@@ -205,26 +205,24 @@ class ProjectorGUI:
         self.tk_tollernc_mm_label = tk.Label(calibration_frame_left, text="tollernc.(mm)")
         self.tk_tollernc_mm_label.pack(side="top", expand=True, fill='both')
         self.tk_tollernc_mm_entry = tk.Entry(calibration_frame_right, textvariable=self.tk_tollernc_mm)
+        self.tk_tollernc_mm_entry.insert(0, 0.15)
         self.tk_tollernc_mm_entry.pack()
 
         self.tk_TCA_XY_arcmin_mm_label = tk.Label(calibration_frame_left, text="TCA(X/Y)arcmin/mm")
         self.tk_TCA_XY_arcmin_mm_label.pack(side="top", expand=True, fill='both')
         self.tk_TCA_XY_arcmin_mm_entry = tk.Entry(calibration_frame_right, textvariable=self.tk_TCA_XY_arcmin_mm)
+        self.tk_TCA_XY_arcmin_mm_entry.insert(0, "3.5/3.5")
         self.tk_TCA_XY_arcmin_mm_entry.pack()
 
 
     def make_middle_frame(self, middle_frame):
-        fig = matplotlib.Figure(figsize=(5, 4), dpi=100)
-        t = np.arange(0, 3, .01)
-        fig.add_subplot(111).plot(t, 2 * np.sin(2 * np.pi * t))
+        # open video source (by default this will try to open the computer webcam)
+        # TODO: set up video frame and graph over lay
 
-        canvas = tk.FigureCanvasTkAgg(fig, master=middle_frame)  # A tk.DrawingArea.
-        canvas.draw()
-        canvas.get_tk_widget().pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
 
-        toolbar = tk.NavigationToolbar2Tk(canvas, middle_frame)
-        toolbar.update()
-        canvas.get_tk_widget().pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
+        return
+   
+
 
     ###top buttons###
 
@@ -265,7 +263,7 @@ class ProjectorGUI:
             # TODO: unset reference trigger
 
         
-        self.middle_frame.bind('<Button-1>', set_reference_helper)
+
         return
 
     """loads refernce"""
