@@ -5,6 +5,10 @@ from matplotlib.backend_bases import key_press_handler
 from matplotlib.figure import Figure
 import tkinter as tk
 import matplotlib.pyplot as plt
+from tkinter import *
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,
+NavigationToolbar2Tk)
 import os
 from PupilParam import *
 from tkinter import simpledialog
@@ -12,8 +16,6 @@ import sys
 import datetime as time
 import matplotlib.pyplot as plt; plt.rcdefaults()
 import numpy as np
-
-import pandas as pd
 
 global SYSPARAMS
 import tkinter.filedialog
@@ -94,11 +96,12 @@ class ProjectorGUI:
         self.tk_save_video_button.pack(expand=True)
 
         ## save video settings
+        ## creating box
         save_video_frame = tk.Frame(left_frame, highlightbackground="black", highlightthickness=2)
         save_video_frame.pack(side="top", expand=True, fill='both')
+
         self.tk_save_video_settings_label = tk.Label(save_video_frame, text="Save Video Settings")
         self.tk_save_video_settings_label.pack(side="top")
-
         save_video_frame_left = tk.Frame(save_video_frame)
         save_video_frame_left.pack(side="left", expand=True, fill='both')
         save_video_frame_right = tk.Frame(save_video_frame)
@@ -137,10 +140,10 @@ class ProjectorGUI:
         video_camera_frame.pack(side="top", expand=True, fill='both')
 
         self.tk_video_camera_settings_label = tk.Label(video_camera_frame, text="Video Camera Settings")
-        self.tk_video_camera_settings_label.pack(side="top", expand=True, fill='x')
+        self.tk_video_camera_settings_label.pack(side="top")
 
         video_camera_frame_top = tk.Frame(video_camera_frame)
-        video_camera_frame_top.pack(side="top", expand=True, fill='x')
+        video_camera_frame_top.pack(side="top", fill='x')
 
 
         self.tk_auto_button = tk.Button(video_camera_frame_top, text="Auto", command=self.tk_auto)
@@ -185,40 +188,54 @@ class ProjectorGUI:
                                                          command=self.tk_enable_tca_correction)
         self.tk_enable_tca_correction_button.pack()
 
-
-
         ##calibration settings
         calibration_frame = tk.Frame(right_frame, highlightbackground="black", highlightthickness=2)
         calibration_frame.pack(side="top", expand=True, fill='both')
 
         self.tk_calibration_label = tk.Label(calibration_frame, text="Calibration Settings")
-        self.tk_calibration_label.pack(side="top", expand=True)
+        self.tk_calibration_label.pack(side="top")
 
         self.tk_show_focus_button = tk.Button(calibration_frame, text="Show Focus", textvariable=self.tk_show_focus)
-        self.tk_show_focus_button.pack(side="right", expand=True, fill='both')
+        self.tk_show_focus_button.pack(side="right", expand=True, fill='x')
 
-        calibration_frame_left = tk.Frame(calibration_frame)
-        calibration_frame_left.pack(side="left", expand=True, fill='both')
-        calibration_frame_right = tk.Frame(calibration_frame)
-        calibration_frame_right.pack(side="left", expand=True, fill='both')
+        calibration_frame_top = tk.Frame(calibration_frame)
+        calibration_frame_top.pack(side="bottom", expand=True, fill='both')
+        calibration_frame_bottom = tk.Frame(calibration_frame)
+        calibration_frame_bottom.pack(side="bottom", expand=True, fill='both')
 
-        self.tk_tollernc_mm_label = tk.Label(calibration_frame_left, text="tollernc.(mm)")
-        self.tk_tollernc_mm_label.pack(side="top", expand=True, fill='both')
-        self.tk_tollernc_mm_entry = tk.Entry(calibration_frame_right, textvariable=self.tk_tollernc_mm)
+        self.tk_tollernc_mm_label = tk.Label(calibration_frame_top, text="tollernc.(mm)")
+        self.tk_tollernc_mm_label.pack(side="left", expand=True, fill='both')
+        self.tk_tollernc_mm_entry = tk.Entry(calibration_frame_top, textvariable=self.tk_tollernc_mm)
         self.tk_tollernc_mm_entry.insert(0, 0.15)
-        self.tk_tollernc_mm_entry.pack()
+        self.tk_tollernc_mm_entry.pack(side="left", expand=True, fill='both')
 
-        self.tk_TCA_XY_arcmin_mm_label = tk.Label(calibration_frame_left, text="TCA(X/Y)arcmin/mm")
-        self.tk_TCA_XY_arcmin_mm_label.pack(side="top", expand=True, fill='both')
-        self.tk_TCA_XY_arcmin_mm_entry = tk.Entry(calibration_frame_right, textvariable=self.tk_TCA_XY_arcmin_mm)
+        self.tk_TCA_XY_arcmin_mm_label = tk.Label(calibration_frame_bottom, text="TCA(X/Y)arcmin/mm")
+        self.tk_TCA_XY_arcmin_mm_label.pack(side="left", expand=True, fill='both')
+        self.tk_TCA_XY_arcmin_mm_entry = tk.Entry(calibration_frame_bottom, textvariable=self.tk_TCA_XY_arcmin_mm)
         self.tk_TCA_XY_arcmin_mm_entry.insert(0, "3.5/3.5")
-        self.tk_TCA_XY_arcmin_mm_entry.pack()
+        self.tk_TCA_XY_arcmin_mm_entry.pack(side="left", expand=True, fill='both')
 
 
     def make_middle_frame(self, middle_frame):
         # open video source (by default this will try to open the computer webcam)
         # TODO: set up video frame and graph over lay
+        """""""[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]"""
+        axis = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
 
+        x = np.array(axis)
+        y = np.array(axis)
+
+        fig = Figure(figsize=(5, 5))
+        pupil_fig = fig.add_subplot(111)
+
+        pupil_fig.plot(1,1)
+
+        canvas = FigureCanvasTkAgg(fig, master=middle_frame)
+        canvas.get_tk_widget().pack()
+        canvas.draw()
+
+        # placing the toolbar on the Tkinter window
+        canvas.get_tk_widget().pack()
 
         return
    
@@ -241,6 +258,8 @@ class ProjectorGUI:
 
     """ starts video"""
     def tk_start_video(self):
+        # TODO: alex help layer graph with video import in matlab library for this https://www.mathworks.com/matlabcentral/fileexchange/68852-code-examples-from-video-processing-in-matlab
+        """ also layer with existing graph so we can plot on video """
         return
 
     """sets refernce"""

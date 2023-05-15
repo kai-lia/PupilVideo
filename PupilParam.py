@@ -1,4 +1,5 @@
 import time
+import matplotlib.pyplot as plt
 
 class PupilParam:
     def __init__(self):
@@ -28,6 +29,19 @@ class PupilParam:
         self.EnableTCAComp = 0
         self.Ltotaloffx = 1
         self.DataSync = None
+
+        # l plots: doing (None,)*int to multi declare without dependencies
+        self.l3, self.l4, self.l5, self.l6, self.l7, self.l8 = (None,)*6
+        # p plot
+        self.p1 = None
+        # v plots
+        self.v1, self.v2, self.v3, self.v4 = (None,)*4
+        # c plots
+        self.c1, self.c2, self.c3, self.c4, self.c5 = (None,)*5
+        # r plots
+        self.r1, self.r2, self.r3, self.r4 = (None,)*4
+
+
 
 # Getter and Setter methods for x1
     def get_x1(self):
@@ -127,3 +141,172 @@ class PupilParam:
 
     def set_DataSync(self, value):
         self.DataSync = value
+
+####Getter and setters for vectors##########
+
+    # l3 property
+    def get_l3(self):
+        return self.l3
+
+    def set_l3(self, plot_obj):
+        self.l3 = plot_obj
+
+    # l4 property
+    def get_l4(self):
+        return self.l3
+
+    def set_l4(self, plot_obj):
+        self.l3 = plot_obj
+
+    # l5 property
+    def get_l5(self):
+        return self.l3
+
+    def set_l5(self, plot_obj):
+        self.l3 = plot_obj
+
+
+    # l6 property
+    def get_l6(self):
+        return self.l6
+
+    def set_l6(self, plot_obj):
+        self.l6 = plot_obj
+
+    # l7 property
+    def get_l7(self):
+        return self.l7
+
+    def set_l7(self, plot_obj):
+        self.l7 = plot_obj
+
+    # l8 property
+    def get_l8(self):
+        return self.l8
+
+    def set_l8(self, plot_obj):
+        self.l8 = plot_obj
+
+    # p1 property
+    def get_p1(self):
+        return self.p1
+
+    def set_p1(self, plot_obj):
+        self.p1 = plot_obj
+
+    # v1 property
+    def get_v1(self):
+        return self.v1
+
+    def set_v1(self, plot_obj):
+        self.v1 = plot_obj
+
+    # v2 property
+    def get_v2(self):
+        return self.v2
+
+    def set_v2(self, plot_obj):
+        self.v2 = plot_obj
+
+    # v3 property
+    def get_v3(self):
+        return self.v3
+
+    def set_v3(self, plot_obj):
+        self.v3 = plot_obj
+
+    # c vectors
+
+    # c1 property
+    def get_c1(self):
+        return self.c1
+
+    def set_c1(self, plot_obj):
+        self.c1 = plot_obj
+
+    # c2 property
+    def get_c2(self):
+        return self.c2
+
+    def set_c2(self, plot_obj):
+        self.c2 = plot_obj
+
+    # c3 property
+    def get_c3(self):
+        return self.c3
+
+    def set_c3(self, plot_obj):
+        self.c3 = plot_obj
+
+    # c4 property
+    def get_c4(self):
+        return self.c4
+
+    def set_c4(self, plot_obj):
+        self.c4 = plot_obj
+
+    # c5 property
+    def get_c5(self):
+        return self.c5
+
+    def set_c5(self, plot_obj):
+        self.c5 = plot_obj
+
+
+    # r1 property
+    def get_r1(self):
+        return self.r1
+
+    def set_r1(self, plot_obj):
+        self.r1 = plot_obj
+
+    # r2 property
+    def get_r2(self):
+        return self.r2
+
+    def set_r2(self, plot_obj):
+        self.r2 = plot_obj
+
+    # r3 property
+    def get_r3(self):
+        return self.r3
+
+    def set_r3(self, plot_obj):
+        self.r3 = plot_obj
+
+    # r4 property
+    def get_r4(self):
+        return self.r4
+
+    def set_r4(self, plot_obj):
+        self.r4 = plot_obj
+
+    """Reset_vectors:
+        used when opening new video instance or zooming in
+        resets vector so tracking accuracy preserved """
+    def reset_vectors(self):
+        plot_obj = plt.plot([1], [1])[0]
+        # l value
+        self.set_l3(plot_obj)
+        self.set_l4(plot_obj)
+        self.set_l5(plot_obj)
+        self.set_l6(plot_obj)
+        self.set_l7(plot_obj)
+        self.set_l8(plot_obj)
+        # p value
+        self.set_p1(plot_obj)
+        # v values
+        self.set_v1(plot_obj)
+        self.set_v2(plot_obj)
+        self.set_v3(plot_obj)
+        # c values
+        self.set_c1(plot_obj)
+        self.set_c2(plot_obj)
+        self.set_c3(plot_obj)
+        self.set_c4(plot_obj)
+        # r values
+        self.set_r1(plot_obj)
+        self.set_r2(plot_obj)
+        self.set_r3(plot_obj)
+        self.set_r4(plot_obj)
+

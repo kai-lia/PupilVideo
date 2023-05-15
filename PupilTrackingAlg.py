@@ -116,7 +116,6 @@ def PupilTrackingAlg(obj, event, himage):
     PupilParam.LastTime = PupilParam.CurrentTime
 
     # Update display
-    drawnow
 
     # Return updated values
     return PupilParam.x1, PupilParam.x2, PupilParam
