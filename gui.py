@@ -279,10 +279,9 @@ class ProjectorGUI:
             PupilParam.set_y2(reference_y2)
             # TODO: Save reference coordinates like matlab file
 
-            # TODO: unset reference trigger
 
+            self.tk_set_reference_button.configure(text="Unset Reference", command=self.tk_unset_reference())
         
-
         return
 
     """loads refernce"""
@@ -308,6 +307,9 @@ class ProjectorGUI:
 
                 # TODO: unset reference trigger
 
+                self.tk_set_reference_button.configure(text="Unset Reference", command=self.tk_unset_reference())
+
+
                 """"
                set(handles.pushbutton3, 'String', 'Unset Reference')"""
             else:
@@ -318,6 +320,7 @@ class ProjectorGUI:
 
     """unsets reference"""
     def tk_unset_reference(self):
+        self.tk_set_reference_button.configure(text="Set Reference", command=self.tk_set_reference())
         return
 
     """disables tracking"""
