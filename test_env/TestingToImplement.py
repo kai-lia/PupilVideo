@@ -11,7 +11,7 @@ def draw_box(frame, start, width, height, color=(0, 0, 255), thickness=10):
 """Runs the video loop to show how the functions work"""
 if __name__ == "__main__":
     # Open the video capture
-    cap = cv2.VideoCapture(1)
+    cap = cv2.VideoCapture(0)
 
     # Read the first frame to get the dimensions
     ret, frame = cap.read()
@@ -23,6 +23,12 @@ if __name__ == "__main__":
     line_prev_x_pos = 0
     line_prev_y_pos = 0
 
+    # Initial positions of box graph
+    box_x_pos = 100
+    box_y_pos = 100
+    box_width = 500
+    box_heigh = 500
+
     while True:
         # Read the frame from the video capture
         ret, frame = cap.read()
@@ -30,9 +36,15 @@ if __name__ == "__main__":
         # Break the loop if the video capture is over
         if not ret:
             break
+        
+        # Overlay with line based on initialized points
         line_start = (line_prev_x_pos, line_prev_y_pos)
         line_end = (line_x_pos, line_y_pos)
         draw_line(frame, line_start, line_end)
+        
+        # Overlay with box based on intialized points
+        box_start = (box_x_pos, box_y_pos)
+        draw_box(frame, box_start, box_width, box_heigh)
         
         # Show the frame
         cv2.imshow("Video", frame)
