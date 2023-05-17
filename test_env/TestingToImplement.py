@@ -1,46 +1,52 @@
-import tkinter as tk
 import cv2
-import PIL
+import numpy as np
 
-class MyVideoCapture:
-    def __init__(self, video_source=1):
-        self.vid = cv2.VideoCapture(video_source)
-        if not self.vid.isOpened():
-            raise ValueError("Unable to open this camera \n select another video source", video_source)
- 
-        self.width = self.vid.get(cv2.CAP_PROP_FRAME_WIDTH)
-        self.height = self.vid.get(cv2.CAP_PROP_FRAME_HEIGHT)
- 
-        self.flipped = True
+def draw_line(frame, start, end, color=(0, 0, 255), thickness=10):
+    cv2.line(frame, start, end, color, thickness)
+    
+def draw_box(frame, start, width, height, color=(0, 0, 255), thickness=10):
+    end = (start[0] + width, start[1] + height)
+    cv2.rectangle(frame, start, end, color, thickness)
 
-    def getFrame(self):
-        if self.vid.isOpened():
-            isTrue, frame = self.vid.read()
-            if isTrue and self.flipped:
-                frame = cv2.flip(frame, 1)
-            if isTrue:
-                return (isTrue, cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-            else:
-                return (isTrue, None)
-        else:
-            return (isTrue, None)
- 
-    def __del__(self):
-        if self.vid.isOpened():
-            self.vid.release()
-            
-def snapshot():
-    file = tk.filedialog(
-        mode='rb', defaultextension='.png',title="Choose Overlay Image", filetypes=[("PNG Files", '*.png')]
-    )
-    if file:
-        overlay_img = PIL.ImageTk.PhotoImage(file=file)
+"""Runs the video loop to show how the functions work"""
+if __name__ == "__main__":
+    # Open the video capture
+    cap = cv2.VideoCapture(1)
 
-window = tk()
-window.resizable(0, 0)
+    # Read the first frame to get the dimensions
+    ret, frame = cap.read()
+    height, width, _ = frame.shape
+    
+    # Initial positions of the linear graph
+    line_x_pos = 10000
+    line_y_pos = 1000
+    line_prev_x_pos = 0
+    line_prev_y_pos = 0
 
-video = MyVideoCapture(1)
-canvas = tk.Canvas(window, width=video.width, height=video.height, bg='red')
-
-Snapshot = tk.Button(window, text='snapshot', width=10, command=snapshot)
-
+    while True:
+        # Read the frame from the video capture
+        ret, frame = cap.read()
+        
+        # Break the loop if the video capture is over
+        if not ret:
+            break
+        line_start = (line_prev_x_pos, line_prev_y_pos)
+        line_end = (line_x_pos, line_y_pos)
+        draw_line(frame, line_start, line_end)
+        
+        # Show the frame
+        cv2.imshow("Video", frame)
+        
+        keypress = cv2.waitKey(1) & 0xFF
+        
+        # Exit if 'q' is pressed
+        if keypress == ord('q'):
+            break
+        # Adjusts endpoint in the y axis
+        elif keypress == ord('=') or keypress == ord('-'):
+            change = keypress == ord('=')
+            line_y_pos = line_y_pos + 50 - change * 100
+        
+    # Release the video capture and close the window
+    cap.release()
+    cv2.destroyAllWindows()
