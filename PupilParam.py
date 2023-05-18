@@ -7,6 +7,8 @@ class PupilParam:
         self.x2 = -1
         self.y1 = -1
         self.y2 = -1
+        self.totaloffx = []
+        self.totaloffy = []
         self.graylevel = 255
         self.Re = -1000
         self.Th = -1
@@ -26,7 +28,7 @@ class PupilParam:
         self.fps = [0] * 10
         self.vidRes = 1024
         self.focus = False # note means focus is shown
-        self.EnableTCAComp = 0
+        self.TCA_comp = False
         self.Ltotaloffx = 1
         self.DataSync = None
 
@@ -171,12 +173,23 @@ class PupilParam:
     def enable_tracking(self):
         self.tracking = True
 
-    # enable and disable for tracking
+    # showing and hiding focus
     def show_focus(self):
         self.focus = True
 
     def hide_focus(self):
         self.focus = False
+
+    # enable and disable for TCA computation
+    def get_TCA_comp(self):
+        return self.TCA_comp
+
+    def disable_TCA_comp(self):
+        self.TCA_comp = False
+
+    def enable_TCA_comp(self):
+        self.TCA_comp= True
+
 
 
 
@@ -186,23 +199,6 @@ class PupilParam:
 
     def set_saving_frequency(self, value):
         self.saving_frequency = value
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

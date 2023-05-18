@@ -18,6 +18,16 @@ class CameraSettings:
     def reset_brightness(self):
         self.brightness = 240
 
+    # Getter and Setter methods for gamma
+    def get_gamma(self):
+        return self.gamma
+
+    def set_gamma(self, gamma):
+        self.gamma = gamma
+
+    def reset_gamma(self):
+        self.gamma = 1
+
     # Getter and Setter methods for iris
     def get_iris(self):
         return self.iris

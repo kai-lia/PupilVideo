@@ -168,23 +168,31 @@ class ProjectorGUI:
         video_camera_frame_right.pack(side="left", expand=True, fill='both')
         # sliders
         self.tk_brightness_label = tk.Label(video_camera_frame_left, text="Brightness:")
-        self.tk_brightness_label.pack()
-        self.tk_brightness_slider = tk.Scale(video_camera_frame_right, from_=0, to=4095, tickinterval=0.1, orient='horizontal')
+        self.tk_brightness_label.pack(expand=True, fill='both')
+        self.tk_brightness_slider = tk.Scale(video_camera_frame_right, from_=0, to=4095, tickinterval=0.1, orient='horizontal',
+                                             command=self.tk_brigtness_change)
+        self.tk_brightness_slider.set(240)
         self.tk_brightness_slider.pack(expand=True, fill='both')
 
         self.tk_gamma_label = tk.Label(video_camera_frame_left, text="Gamma:")
         self.tk_gamma_label.pack(expand=True, fill='both')
-        self.tk_gamma_slider = tk.Scale(video_camera_frame_right, from_=0, to=5, tickinterval=0.1, orient='horizontal')
+        self.tk_gamma_slider = tk.Scale(video_camera_frame_right, from_=0, to=5, tickinterval=0.1, orient='horizontal',
+                                        command=self.tk_gamma_change)
+        self.tk_gamma_slider.set(1)
         self.tk_gamma_slider.pack(expand=True, fill='both')
 
         self.tk_exposure_label = tk.Label(video_camera_frame_left, text="Exposure:")
         self.tk_exposure_label.pack(expand=True, fill='both')
-        self.tk_exposure_slider = tk.Scale(video_camera_frame_right, from_=0, to=4, tickinterval=0.0005, orient='horizontal')
+        self.tk_exposure_slider = tk.Scale(video_camera_frame_right, from_=0, to=4, tickinterval=0.0005, orient='horizontal',
+                                           command=self.tk_exposure_change)
+        self.tk_exposure_slider.set(0.0333)
         self.tk_exposure_slider.pack(expand=True, fill='both')
 
         self.tk_gain_label = tk.Label(video_camera_frame_left, text="Gain:")
         self.tk_gain_label.pack(expand=True, fill='both')
-        self.tk_gain_slider = tk.Scale(video_camera_frame_right, from_=0, to=48, tickinterval=0.1, orient='horizontal')
+        self.tk_gain_slider = tk.Scale(video_camera_frame_right, from_=0, to=48, tickinterval=0.1, orient='horizontal',
+                                       command=self.tk_gain_change)
+        self.tk_gain_slider.set(0)
         self.tk_gain_slider.pack(expand=True, fill='both')
 
         # button
@@ -445,16 +453,33 @@ class ProjectorGUI:
     def tk_load_settings(self):
         return
 
-    """"""
+
     def tk_enable_tca_correction(self):
+        """ """
+        original_color = [0.941176, 0.941176, 0.941176]
+        self.PupilParam.enable_TCA_comp()
+        self.PupilParam.totaloffx
+
+
+
+        self.tk_focus_button.configure(text="Disable TCA Correction", command=self.tk_disable_tca_correction)
         return
 
-    """ """
+    def tk_disable_tca_correction(self):
+        """ """
+        original_color = [0.941176, 0.941176, 0.941176]
+        self.PupilParam.disable_TCA_comp()
+        # PupilParam.totaloffx = []
+        # PupilParam.totaloffy = []
+        self.tk_focus_button.configure(text="Enable TCA Correction", command=self.tk_enable_tca_correction)
+
+
     def tk_tollernc_mm(self):
+        """ """
         return
 
-    """"""
     def tk_TCA_XY_arcmin_mm(self):
+        """ """
         return
 
 
@@ -471,10 +496,40 @@ class ProjectorGUI:
         self.tk_focus_button.configure(text="Show Focus", command=self.tk_show_focus)
         return
 
+    ######## sliders ###########
+
+    def tk_brightness_change(self):
+        """brightness slider moved"""
+        self.CameraSettings.set_brightness(self.tk_brightness_slider)
+        # TODO: if video in progress auto update value
+        return
+
+    def tk_gamma_change(self):
+        """slider moved"""
+        self.CameraSettings.set_gamma(self.tk_gamma_slider)
+        # TODO: if video in progress auto update value
+        return
+
+    def tk_exposure_change(self):
+        """slider moved"""
+        self.CameraSettings.set_exposure(self.tk_exposure_slider)
+        # TODO: if video in progress auto update value
+        return
+
+    def tk_gain_change(self):
+        """slider moved"""
+        self.CameraSettings.set_gain(self.tk_gain_slider)
+        # TODO: if video in progress auto update value
+        return
+
+
+
+
+
+
     "main loop functioning for intitlization"
     def main_loop(self):
         self.tk_root.mainloop()
-
 
 
 # Getter and Setter methods for PupilTracker
