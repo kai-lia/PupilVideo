@@ -16,9 +16,9 @@ class PupilParam:
         self.Video = 0
         self.SavingVideo = 0
         self.MAX_NUM_OF_SAVABLE_FRAMES = 5
-        self.SAVING_FREQUENCY = 0.3
+        self.saving_frequency = 0.3
         self.FrameCount = self.MAX_NUM_OF_SAVABLE_FRAMES
-        self.Sync = 0
+        self.Sync = False
         self.ShowReference = 0
         self.tracking = True
         self.reftime = time.process_time() # Note: 'clock' function in Python returns the CPU time, not the wall time like in MATLAB
@@ -128,7 +128,7 @@ class PupilParam:
 
     # Getter and Setter methods for Video
     def get_Video(self):
-        return self._Video
+        return self.Video
 
     def set_Video(self, value):
         self._Video = value
@@ -154,8 +154,17 @@ class PupilParam:
     def set_DataSync(self, value):
         self.DataSync = value
 
+    def reset_DataSync(self):
+        self.DataSync = None
 
-    #enable and disable for tracking
+    #sync ops for "Save Sync button"
+    def save_sync(self):
+        self.tracking = False
+
+    def wait_sync(self):
+        self.tracking = True
+
+    # enable and disable for tracking
     def disable_tracking(self):
         self.tracking = False
 
@@ -168,6 +177,33 @@ class PupilParam:
 
     def hide_focus(self):
         self.focus = False
+
+
+
+    # getter setter saving frequency
+    def get_saving_frequency(self):
+        return self.saving_frequency
+
+    def set_saving_frequency(self, value):
+        self.saving_frequency = value
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

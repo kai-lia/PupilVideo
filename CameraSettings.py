@@ -3,7 +3,7 @@ class CameraSettings:
         self.brightness = 240
         self.iris = 1
         self.exposure = 0.0333
-        self.exposure_mode = 2
+        self.exposure_mode = True
         self.gain = 0
         self.video_format = 'RGB24 (1216x1024) [Skipping 2x]'
         self.roi = [0, 0, 1216, 1024]
@@ -45,8 +45,11 @@ class CameraSettings:
     def set_exposure_mode(self, exposure_mode):
         self.exposure_mode = exposure_mode
 
-    def reset_exposure_mode(self):
-        self.exposure_mode = 2
+    def auto_exposure_mode(self):
+        self.exposure_mode = True
+
+    def manual_exposure_mode(self):
+        self.exposure_mode = False
 
     # Getter and Setter methods for gain
     def get_gain(self):
