@@ -1,65 +1,118 @@
 import cv2
 import numpy as np
+import tkinter as tk
+from PIL import Image, ImageTk
 
-# Function to draw a growing non-static linear graph
-def draw_graph(frame, prev_x, prev_y, x, y, color):
-    # Draw the line segment
-    # cv2.line(frame, (prev_x, prev_y), (x, y), color, thickness=10)
-    cv2.circle(frame, (x, y), radius=5, color=color, thickness=-10)
+# Function to update the graph based on variables 'x' and 'slope' and frame dimensions
+def update_graph(x, slope, width, height):
+    graph = np.zeros((height, width, 3), np.uint8)
+    y = slope * x / width
+    y = height - int(y * height)
+    cv2.line(graph, (0, height), (x, y), (0, 255, 0), 3)
+    return graph
 
-# Function to overlay the graph on the video frame
-def overlay_graph(frame, x, y, prev_x, prev_y, color):
-    # Draw the graph on the frame
-    draw_graph(frame, prev_x, prev_y, x, y, color)
+# Create a video capture object
+cap = cv2.VideoCapture(1)
 
-    # Update the previous position
-    prev_x = x
-    prev_y = y
+# Set the desired size for the resized video feed
+resized_width = 640
+resized_height = 480
 
-    # Increase the position for the next frame
-    x += 10
-    y = int(x * 0.75)  # Adjust the slope of the graph as desired
+# Create a tkinter window
+window = tk.Tk()
+window.title("Video Overlay")
 
-    return x, y, prev_x, prev_y
+# Create a frame for the slope scale and y-axis labels on the left side
+left_frame = tk.Frame(window)
+left_frame.pack(side=tk.LEFT)
 
-# Open the video capture
-cap = cv2.VideoCapture(1)  # Use 0 for default camera or provide the path to a video file
+# Create a frame for the video label and x-axis labels
+video_frame = tk.Frame(window)
+video_frame.pack(side=tk.TOP)
 
-# Read the first frame to get the dimensions
-ret, frame = cap.read()
-height, width, _ = frame.shape
+# Create a frame for the flip button on the right side
+right_frame = tk.Frame(window)
+right_frame.pack(side=tk.RIGHT)
 
-# Initial positions of the graph
-x_pos = 0
-y_pos = 0
-prev_x_pos = 0
-prev_y_pos = 0
+# Create slope scale in the left frame
+slope_scale = tk.Scale(left_frame, label="Slope", from_=-10, to=10, resolution=0.1, orient=tk.VERTICAL)
+slope_scale.pack(side=tk.LEFT)
 
-# Color of the graph (in BGR format)
-graph_color = (x_pos, y_pos, x_pos + y_pos) 
+# Create y-axis labels on the left side of the video frame
+y_axis_frame = tk.Frame(video_frame)
+y_axis_frame.pack(side=tk.LEFT)
+for i in range(11):
+    label = tk.Label(y_axis_frame, text=str(i))
+    label.pack()
 
+flip = False
 
-while True:
-    # Read the frame from the video capture
+# Create a flip button in the right frame
+def flip_video():
+    global flip
+    flip = not flip
+
+flip_button = tk.Button(right_frame, text="Flip", command=flip_video)
+flip_button.pack(side=tk.TOP)
+
+# Create a label to display the video feed
+video_label = tk.Label(video_frame)
+video_label.pack(side=tk.TOP)
+
+# Create x-axis labels at the bottom of the video frame
+x_axis_frame = tk.Frame(window)
+x_axis_frame.pack(side=tk.BOTTOM)
+for i in range(11):
+    label = tk.Label(x_axis_frame, text=str(i))
+    label.pack(side=tk.LEFT)
+
+# Main loop
+def update_frame():
+    global flip
+
+    # Read a frame from the video feed
     ret, frame = cap.read()
 
-    # Break the loop if the video capture is over
-    if not ret:
-        break
+    # Flip the frame horizontally if 'flip' flag is True
+    if flip:
+        frame = cv2.flip(frame, 1)
 
-    # Overlay the graph on the frame
-    x_pos, y_pos, prev_x_pos, prev_y_pos = overlay_graph(frame, x_pos, y_pos, prev_x_pos, prev_y_pos, graph_color)
+    # Resize the frame to the desired dimensions
+    resized_frame = cv2.resize(frame, (resized_width, resized_height))
 
-    # Mod to ensure dot stays in frame
-    y_pos = y_pos % height
-    x_pos = x_pos % width
-    # Show the frame
-    cv2.imshow("Video", frame)
+    # Get the width and height of the resized frame
+    height, width, _ = resized_frame.shape
 
-    # Exit if 'q' is pressed
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+    # Get the current slope value from the scale
+    slope = slope_scale.get()
 
-# Release the video capture and close the window
+    # Generate a linear graph based on the width, height, and slope
+    graph = update_graph(width, slope, width, height)
+
+    # Overlay the graph on the resized frame
+    overlay = cv2.addWeighted(resized_frame, 0.7, graph, 0.3, 0)
+
+    # Convert the overlayed frame to RGB format
+    overlay_rgb = cv2.cvtColor(overlay, cv2.COLOR_BGR2RGB)
+
+    # Convert the RGB frame to PIL Image format
+    img = Image.fromarray(overlay_rgb)
+
+    # Convert the PIL Image to Tkinter-compatible Image
+    img_tk = ImageTk.PhotoImage(image=img)
+
+    # Update the video label with the new frame
+    video_label.img_tk = img_tk
+    video_label.configure(image=img_tk)
+
+    # Schedule the next frame update
+    video_label.after(20, update_frame)
+
+# Start updating the frames
+update_frame()
+
+# Run the Tkinter event loop
+window.mainloop()
+
+# Release the video capture object
 cap.release()
-cv2.destroyAllWindows()
