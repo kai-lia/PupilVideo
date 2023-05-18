@@ -11,6 +11,7 @@ from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,
 NavigationToolbar2Tk)
 import os
 from PupilParam import *
+from CameraSettings import *
 from tkinter import simpledialog
 import sys
 import datetime as time
@@ -46,7 +47,7 @@ class ProjectorGUI:
         self.tk_root.geometry('900x600')
         self.tk_root.title('PupilVideoTrackingV2')
         self.type_pupil_file_name_prefix = ""
-        self.pupil_param = None
+        self.PupilParam = PupilParam()
         self.PupilTracker = None
 
         # Create top, left, middle, and right frames formatting
@@ -75,13 +76,13 @@ class ProjectorGUI:
         self.tk_quit_button.pack(side='left', expand=True, fill='both')
         self.tk_start_video_button = tk.Button(top_frame, text="Start Video", command=self.tk_start_video)
         self.tk_start_video_button.pack(side='left', expand=True, fill='both')
-        self.tk_set_reference_button = tk.Button(top_frame, text="Set Reference", command=self.tk_set_reference)
-        self.tk_set_reference_button.pack(side='left', expand=True, fill='both')
+        self.tk_reference_button = tk.Button(top_frame, text="Set Reference", command=self.tk_set_reference)
+        self.tk_reference_button.pack(side='left', expand=True, fill='both')
         self.tk_load_reference_button = tk.Button(top_frame, text="Load Reference", command=self.tk_load_reference)
         self.tk_load_reference_button.pack(side='left', expand=True, fill='both')
-        self.tk_disable_tracking_button = tk.Button(top_frame, text="Disable Tracking Button",
+        self.tk_tracking_button = tk.Button(top_frame, text="Disable Tracking",
                                                     command=self.tk_disable_tracking)
-        self.tk_disable_tracking_button.pack(side='left', expand=True, fill='both')
+        self.tk_tracking_button.pack(side='left', expand=True, fill='both')
         self.tk_zoom_in_button = tk.Button(top_frame, text="Zoom In", command=self.tk_zoom_in)
         self.tk_zoom_in_button.pack(side='left', expand=True, fill='both')
         self.tk_draw_be_button = tk.Button(top_frame, text="Draw BE", command=self.tk_draw_be)
@@ -195,8 +196,8 @@ class ProjectorGUI:
         self.tk_calibration_label = tk.Label(calibration_frame, text="Calibration Settings")
         self.tk_calibration_label.pack(side="top")
 
-        self.tk_show_focus_button = tk.Button(calibration_frame, text="Show Focus", textvariable=self.tk_show_focus)
-        self.tk_show_focus_button.pack(side="right", expand=True, fill='x')
+        self.tk_focus_button = tk.Button(calibration_frame, text="Show Focus", textvariable=self.tk_show_focus)
+        self.tk_focus_button.pack(side="right", expand=True, fill='x')
 
         calibration_frame_top = tk.Frame(calibration_frame)
         calibration_frame_top.pack(side="bottom", expand=True, fill='both')
@@ -222,13 +223,12 @@ class ProjectorGUI:
         """""""[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]"""
         axis = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
 
-        x = np.array(axis)
-        y = np.array(axis)
+        x = y = np.array(axis)
 
-        fig = Figure(figsize=(5, 5))
+        fig = Figure(figsize=(6, 6))
         pupil_fig = fig.add_subplot(111)
 
-        pupil_fig.plot(1,1)
+        pupil_fig.plot(x,y)
 
         canvas = FigureCanvasTkAgg(fig, master=middle_frame)
         canvas.get_tk_widget().pack()
@@ -236,10 +236,7 @@ class ProjectorGUI:
 
         # placing the toolbar on the Tkinter window
         canvas.get_tk_widget().pack()
-
         return
-   
-
 
     ###top buttons###
 
@@ -249,8 +246,8 @@ class ProjectorGUI:
         self.set_PupilTracker(0);
         date_string = time.strftime('%Y-%m-%d_%H-%M-%S')
 
-        if PupilParam.get_DataSync() is not None:
-            pupil_data = PupilParam.get_DataSync()
+        if self.PupilParam.get_DataSync() is not None:
+            pupil_data = self.PupilParam.get_DataSync()
             file = open(f'./VideoAndRef/Trial_DataPupil_{self.get_type_pupil_file_name_prefix()}_{date_string}')
             file.write(pupil_data)
             file.close()
@@ -273,25 +270,27 @@ class ProjectorGUI:
             reference_y1 = round(y)-30
             reference_y2 = round(y)-30
             
-            PupilParam.set_x1(reference_x1)
-            PupilParam.set_x2(reference_x2)
-            PupilParam.set_y1(reference_y1)
-            PupilParam.set_y2(reference_y2)
+            self.PupilParam.set_x1(reference_x1)
+            self.PupilParam.set_x2(reference_x2)
+            self.PupilParam.set_y1(reference_y1)
+            self.PupilParam.set_y2(reference_y2)
             # TODO: Save reference coordinates like matlab file
 
-
-            self.tk_set_reference_button.configure(text="Unset Reference", command=self.tk_unset_reference())
+            self.tk_reference_button.configure(text="Unset Reference", command=self.tk_unset_reference())
         
         return
 
-    """loads refernce"""
+
     def tk_load_reference(self):
+        """loads then sets reference from a RefPupil_ file
+            after, set reference button should now be unset reference
+        """
         self.tk_root.withdraw()
 
         file_name = tk.filedialog.askopenfilename(title='Select RefPupil file', initialdir=os.getcwd())
 
         if file_name:
-            global PupilParam
+
             path, file = os.path.split(file_name)
             if file.startswith('RefPupil_'):
                 reference_data = sio.loadmat(file_name)
@@ -300,31 +299,42 @@ class ProjectorGUI:
                 reference_y1 = reference_data['Refy1'][0][0]
                 reference_y2 = reference_data['Refy2'][0][0]
 
-                PupilParam.set_x1(reference_x1)
-                PupilParam.set_x2(reference_x2)
-                PupilParam.set_y1(reference_y1)
-                PupilParam.set_y2(reference_y2)
-
-                # TODO: unset reference trigger
-
-                self.tk_set_reference_button.configure(text="Unset Reference", command=self.tk_unset_reference())
+                self.PupilParam.set_x1(reference_x1)
+                self.PupilParam.set_x2(reference_x2)
+                self.PupilParam.set_y1(reference_y1)
+                self.PupilParam.set_y2(reference_y2)
 
 
-                """"
-               set(handles.pushbutton3, 'String', 'Unset Reference')"""
+                self.tk_reference_button.configure(text="Unset Reference", command=self.tk_unset_reference())
             else:
                 print("Invalid file name. File must start with 'RefPupil_'")
 
 
         return
 
-    """unsets reference"""
+
     def tk_unset_reference(self):
-        self.tk_set_reference_button.configure(text="Set Reference", command=self.tk_set_reference())
+        """unsets reference
+            should only appear as a button option after setting or loading reference"""
+        self.PupilParam.reset_x1()
+        self.PupilParam.reset_x2()
+        self.PupilParam.reset_y1()
+        self.PupilParam.reset_y2()
+        ##TODO: make sure box is de initilized
+        self.tk_reference_button.configure(text="Set Reference", command=self.tk_set_reference)
         return
 
-    """disables tracking"""
+
     def tk_disable_tracking(self):
+        """disables tracking"""
+        self.pupil_param.disable_tracking()
+        self.tk_tracking_button.configure(text="Enable Tracking", command=self.tk_enable_tracking)
+        return
+
+    def tk_enable_tracking(self):
+        """enables tracking"""
+        self.pupil_param.enable_tracking()
+        self.tk_tracking_button.configure(text="Disable Tracking", command=self.tk_disable_tracking)
         return
 
     """zooms in"""
@@ -333,13 +343,13 @@ class ProjectorGUI:
 
     """draws BE"""
     def tk_draw_be(self):
-        if PupilParam.get_BEFlag() == 0:
-            PupilParam.set_BEFlag(1)
+        if self.PupilParam.get_BEFlag() == 0:
+            self.PupilParam.set_BEFlag(1)
             #TODO: set(hObject,'String','Hide BE');
             self.tk_draw_be_button.config(text = 'Hide BE')
             self.tk_draw_be_button.pack()
         else:
-            PupilParam.set_BEFlag(0)
+            self.PupilParam.set_BEFlag(0)
             # TODO: set(hObject,'String','Draw BE');
             self.tk_draw_be_button.config(text='Draw BE')
             self.tk_draw_be_button.pack()
@@ -352,8 +362,8 @@ class ProjectorGUI:
 
     """save video"""
     def tk_save_video(self):
-        if PupilParam.get_Video() == 1 and PupilParam.set_SavingVideo() == 0:
-            PupilParam.set_SavingVideo(1)
+        if self.PupilParam.get_Video() == 1 and self.PupilParam.set_SavingVideo() == 0:
+            self.PupilParam.set_SavingVideo(1)
         return
 
     """ """
@@ -381,8 +391,16 @@ class ProjectorGUI:
     def tk_auto(self):
         return
 
-    """"""
+
     def tk_reset(self):
+        """ resets camera values to starting values"""
+        CameraSettings.reset_brightness()
+        CameraSettings.reset_iris()
+        CameraSettings.reset_exposure()
+        CameraSettings.reset_exposure_mode() # sets to manual exposure
+        CameraSettings.get_gain()
+
+        #TODO: make it so it will work when video is running
         return
 
     """ """
@@ -405,8 +423,18 @@ class ProjectorGUI:
     def tk_TCA_XY_arcmin_mm(self):
         return
 
-    """ """
+
     def tk_show_focus(self):
+        """ shows focus """
+        self.PupilParam.show_focus()
+        self.tk_focus_button.configure(text="Hide Focus", command=self.tk_hide_focus)
+        return
+
+
+    def tk_hide_focus(self):
+        """ hides focus """
+        self.PupilParam.hide_focus()
+        self.tk_focus_button.configure(text="Show Focus", command=self.tk_show_focus)
         return
 
     "main loop functioning for intitlization"

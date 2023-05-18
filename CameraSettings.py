@@ -1,62 +1,77 @@
 class CameraSettings:
     def __init__(self):
-        self._brightness = 240
-        self._iris = 1
-        self._exposure = 0.0333
-        self._exposure_mode = 2
-        self._gain = 0
-        self._video_format = 'RGB24 (1216x1024) [Skipping 2x]'
-        self._roi = [0, 0, 1216, 1024]
+        self.brightness = 240
+        self.iris = 1
+        self.exposure = 0.0333
+        self.exposure_mode = 2
+        self.gain = 0
+        self.video_format = 'RGB24 (1216x1024) [Skipping 2x]'
+        self.roi = [0, 0, 1216, 1024]
 
     # Getter and Setter methods for brightness
     def get_brightness(self):
-        return self._brightness
+        return self.brightness
 
     def set_brightness(self, brightness):
-        self._brightness = brightness
+        self.brightness = brightness
+
+    def reset_brightness(self):
+        self.brightness = 240
 
     # Getter and Setter methods for iris
     def get_iris(self):
-        return self._iris
+        return self.iris
 
     def set_iris(self, iris):
-        self._iris = iris
+        self.iris = iris
+
+    def reset_iris(self):
+        self.iris = 1
 
     # Getter and Setter methods for exposure
     def get_exposure(self):
         return self._exposure
 
     def set_exposure(self, exposure):
-        self._exposure = exposure
+        self.exposure = exposure
+
+    def reset_exposure(self):
+        self.exposure = 0.0333
 
     # Getter and Setter methods for exposure_mode
     def get_exposure_mode(self):
-        return self._exposure_mode
+        return self.exposure_mode
 
     def set_exposure_mode(self, exposure_mode):
-        self._exposure_mode = exposure_mode
+        self.exposure_mode = exposure_mode
+
+    def reset_exposure_mode(self):
+        self.exposure_mode = 2
 
     # Getter and Setter methods for gain
     def get_gain(self):
-        return self._gain
+        return self.gain
 
     def set_gain(self, gain):
-        self._gain = gain
+        self.gain = gain
+
+    def set_gain(self, gain):
+        self.gain = 0
 
     # Getter and Setter methods for video format
     def get_video_format(self):
-        return self._video_format
+        return self.video_format
 
     def set_video_format(self, video_format):
-        self._video_format = video_format
+        self.video_format = video_format
 
     # Getter and Setter methods for roi
     def get_roi(self):
-        return self._roi
+        return self.roi
 
 
     def set_roi(self, roi):
-        self._roi = roi
+        self.roi = roi
 
     # Setter functions
 

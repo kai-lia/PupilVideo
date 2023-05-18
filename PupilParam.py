@@ -20,12 +20,12 @@ class PupilParam:
         self.FrameCount = self.MAX_NUM_OF_SAVABLE_FRAMES
         self.Sync = 0
         self.ShowReference = 0
-        self.DisableTracking = 0
+        self.tracking = True
         self.reftime = time.process_time() # Note: 'clock' function in Python returns the CPU time, not the wall time like in MATLAB
         self.idx_reftime = 11
         self.fps = [0] * 10
         self.vidRes = 1024
-        self.ShowFocus = 0
+        self.focus = False # note means focus is shown
         self.EnableTCAComp = 0
         self.Ltotaloffx = 1
         self.DataSync = None
@@ -43,33 +43,45 @@ class PupilParam:
 
 
 
-# Getter and Setter methods for x1
+    # Getter and Setter methods for x1
     def get_x1(self):
-        return self._x1
+        return self.x1
 
     def set_x1(self, value):
-        self._x1 = value
+        self.x1 = value
+
+    def reset_x1(self):
+        self.x1 = -1
 
     # Getter and Setter methods for x2
     def get_x2(self):
-        return self._x2
+        return self.x2
 
     def set_x2(self, value):
-        self._x2 = value
+        self.x2 = value
+
+    def reset_x2(self):
+        self.x2 = -1
 
     # Getter and Setter methods for y1
     def get_y1(self):
-        return self._y1
+        return self.y1
 
     def set_y1(self, value):
-        self._y1 = value
+        self.y1 = value
+
+    def reset_y1(self):
+        self.y1 = -1
 
     # Getter and Setter methods for y2
     def get_y2(self):
-        return self._y2
+        return self.y2
 
     def set_y2(self, value):
-        self._y2 = value
+        self.y2 = value
+
+    def reset_y2(self):
+        self.y2 = -1
 
     # Getter and Setter methods for graylevel
     def get_graylevel(self):
@@ -141,6 +153,24 @@ class PupilParam:
 
     def set_DataSync(self, value):
         self.DataSync = value
+
+
+    #enable and disable for tracking
+    def disable_tracking(self):
+        self.tracking = False
+
+    def enable_tracking(self):
+        self.tracking = True
+
+    # enable and disable for tracking
+    def show_focus(self):
+        self.focus = True
+
+    def hide_focus(self):
+        self.focus = False
+
+
+
 
 ####Getter and setters for vectors##########
 
