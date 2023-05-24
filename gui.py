@@ -63,7 +63,7 @@ class ProjectorGUI:
         # middle frame creation
         middle_frame = tk.Frame(self.tk_root)
         middle_frame.pack(side="left", expand=True, fill='both')
-        self.make_middle_frame(middle_frame)
+        make_middle_frame(middle_frame)
 
         # right frame creation
         right_frame = tk.Frame(self.tk_root)
@@ -169,29 +169,25 @@ class ProjectorGUI:
         # sliders
         self.tk_brightness_label = tk.Label(video_camera_frame_left, text="Brightness:")
         self.tk_brightness_label.pack(expand=True, fill='both')
-        self.tk_brightness_slider = tk.Scale(video_camera_frame_right, from_=0, to=4095, tickinterval=0.1, orient='horizontal',
-                                             command=self.tk_brigtness_change)
+        self.tk_brightness_slider = tk.Scale(video_camera_frame_right, from_=0, to=4095, tickinterval=0.1, orient='horizontal')
         self.tk_brightness_slider.set(240)
         self.tk_brightness_slider.pack(expand=True, fill='both')
 
         self.tk_gamma_label = tk.Label(video_camera_frame_left, text="Gamma:")
         self.tk_gamma_label.pack(expand=True, fill='both')
-        self.tk_gamma_slider = tk.Scale(video_camera_frame_right, from_=0, to=5, tickinterval=0.1, orient='horizontal',
-                                        command=self.tk_gamma_change)
+        self.tk_gamma_slider = tk.Scale(video_camera_frame_right, from_=0, to=5, tickinterval=0.1, orient='horizontal')
         self.tk_gamma_slider.set(1)
         self.tk_gamma_slider.pack(expand=True, fill='both')
 
         self.tk_exposure_label = tk.Label(video_camera_frame_left, text="Exposure:")
         self.tk_exposure_label.pack(expand=True, fill='both')
-        self.tk_exposure_slider = tk.Scale(video_camera_frame_right, from_=0, to=4, tickinterval=0.0005, orient='horizontal',
-                                           command=self.tk_exposure_change)
+        self.tk_exposure_slider = tk.Scale(video_camera_frame_right, from_=0, to=4, tickinterval=0.0005, orient='horizontal')
         self.tk_exposure_slider.set(0.0333)
         self.tk_exposure_slider.pack(expand=True, fill='both')
 
         self.tk_gain_label = tk.Label(video_camera_frame_left, text="Gain:")
         self.tk_gain_label.pack(expand=True, fill='both')
-        self.tk_gain_slider = tk.Scale(video_camera_frame_right, from_=0, to=48, tickinterval=0.1, orient='horizontal',
-                                       command=self.tk_gain_change)
+        self.tk_gain_slider = tk.Scale(video_camera_frame_right, from_=0, to=48, tickinterval=0.1, orient='horizontal')
         self.tk_gain_slider.set(0)
         self.tk_gain_slider.pack(expand=True, fill='both')
 
@@ -266,7 +262,14 @@ class ProjectorGUI:
     def tk_start_video(self):
         # TODO: alex help layer graph with video import in matlab library for this https://www.mathworks.com/matlabcentral/fileexchange/68852-code-examples-from-video-processing-in-matlab
         """ also layer with existing graph so we can plot on video """
+
+
+
+
+
+
         return
+    """Stops video"""
 
     """sets refernce"""
     def tk_set_reference(self):
@@ -459,8 +462,6 @@ class ProjectorGUI:
         original_color = [0.941176, 0.941176, 0.941176]
         self.PupilParam.enable_TCA_comp()
         self.PupilParam.totaloffx
-
-
 
         self.tk_focus_button.configure(text="Disable TCA Correction", command=self.tk_disable_tca_correction)
         return
