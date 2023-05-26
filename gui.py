@@ -1,6 +1,13 @@
+import cv2
 import numpy as np
 
 # Implement the default Matplotlib key bindings.
+from PIL import ImageTk
+
+import tkinter as tk
+from PIL import ImageTk, Image
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.backend_bases import key_press_handler
 from matplotlib.figure import Figure
 import tkinter as tk
@@ -17,6 +24,7 @@ import sys
 import datetime
 import matplotlib.pyplot as plt; plt.rcdefaults()
 import numpy as np
+from matplotlib.widgets import Slider
 
 global SYSPARAMS
 import tkinter.filedialog
@@ -49,6 +57,10 @@ class ProjectorGUI:
         self.type_pupil_file_name_prefix = ""
         self.PupilParam = PupilParam()
         self.PupilTracker = None
+        self.video_frame = None
+        self.ax = None
+        self.camera = None # setting camera for my mac is 0
+        self.video_on = False
 
         # Create top, left, middle, and right frames formatting
         top_frame = tk.Frame(self.tk_root)
@@ -63,7 +75,7 @@ class ProjectorGUI:
         # middle frame creation
         middle_frame = tk.Frame(self.tk_root)
         middle_frame.pack(side="left", expand=True, fill='both')
-        make_middle_frame(middle_frame)
+        self.make_middle_frame(middle_frame)
 
         # right frame creation
         right_frame = tk.Frame(self.tk_root)
@@ -226,21 +238,22 @@ class ProjectorGUI:
         # open video source (by default this will try to open the computer webcam)
         # TODO: set up video frame and graph over lay
         """""""[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]"""
+        # creating figure
         axis = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
-
         x = y = np.array(axis)
 
-        fig = Figure(figsize=(6, 6))
-        pupil_fig = fig.add_subplot(111)
+        fig, self.ax = plt.subplots()
 
-        pupil_fig.plot(x,y)
+        self.ax.plot(x, y)
 
-        canvas = FigureCanvasTkAgg(fig, master=middle_frame)
-        canvas.get_tk_widget().pack()
-        canvas.draw()
-
+        self.video_canvas = FigureCanvasTkAgg(fig, master=middle_frame)
+        self.video_canvas.draw()
         # placing the toolbar on the Tkinter window
-        canvas.get_tk_widget().pack()
+        self.video_canvas.get_tk_widget().pack()
+
+        self.video_frame = tk.Label(middle_frame)
+        self.video_frame.pack()
+
         return
 
     ###top buttons###
@@ -262,17 +275,36 @@ class ProjectorGUI:
     def tk_start_video(self):
         # TODO: alex help layer graph with video import in matlab library for this https://www.mathworks.com/matlabcentral/fileexchange/68852-code-examples-from-video-processing-in-matlab
         """ also layer with existing graph so we can plot on video """
+        self.camera = cv2.VideoCapture(0)
+        self.video_on = True
+        self.video_stream()
 
+        self.tk_start_video_button.configure(text="Stop Video", command=self.tk_stop_video)
 
+    def tk_stop_video(self):
+        """ stops video"""
+        self.video_on = False
 
+        self.tk_start_video_button.configure(text="Start Video", command=self.tk_start_video)
 
+    def video_stream(self):
+        " consistent loop until stop vid "
+        if not self.video_on:
+            return
 
+        ret, frame = self.camera.read() # Read a frame from the video feed
+        self.ax.clear()
+        color_fix = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) # fixes color
+        self.ax.imshow(color_fix)
+        self.video_canvas.draw()
+        self.video_canvas.get_tk_widget().pack()
 
-        return
-    """Stops video"""
+        self.video_frame.pack()
 
-    """sets refernce"""
+        self.video_frame.after(1, self.video_stream)
+
     def tk_set_reference(self):
+        """sets reference"""
 
         """Get mouse coordinates then set reference to it"""
         def set_reference_helper(event):
@@ -291,7 +323,6 @@ class ProjectorGUI:
             self.tk_reference_button.configure(text="Unset Reference", command=self.tk_unset_reference())
         
         return
-
 
     def tk_load_reference(self):
         """loads then sets reference from a RefPupil_ file
@@ -427,14 +458,21 @@ class ProjectorGUI:
         """ makes controls of video settings automatic """
         self.CameraSettings.auto_exposure_mode()
         self.tk_automatic_button.configure(text="Manual", command=self.tk_manual)
-        #TODO: condition if video is running
+
+        if self.video_on:
+            # TODO: if video is on: set camera values
+
+            return
         return
 
     def tk_manual(self):
         """ makes controls of video settings manual """
         self.CameraSettings.manual_exposure_mode()
         self.tk_automatic_button.configure(text="Auto", command=self.tk_auto)
-        # TODO: condition if video is running
+        if self.video_on:
+            # TODO: if video is on: set camera values
+
+            return
         return
 
     def tk_reset(self):
