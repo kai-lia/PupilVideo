@@ -41,6 +41,11 @@ class PupilParam:
         self.Ltotaloffx = 1
         self.DataSync = None
 
+        #TCAmm
+        self.TCAmmX = None
+        self.TCAmmY = None
+
+
         # l plots: doing (None,)*int to multi declare without dependencies
         self.l3, self.l4, self.l5, self.l6, self.l7, self.l8 = (None,)*6
         # p plot
@@ -236,6 +241,20 @@ class PupilParam:
 
     def set_PTData(self, PTData):
         self.PTData = PTData
+
+
+# ### TCAmm ### #
+    def get_TCAmmX(self):
+        return self.TCAmmX
+
+    def set_TCAmmX(self, TCAmmX):
+        self.TCAmmX = TCAmmX
+
+    def get_TCAmmY(self):
+        return self.TCAmmY
+
+    def set_TCAmmY(self, TCAmmY):
+        self.TCAmmY = TCAmmY
 
 # ### Getter and Setters for Vectors ### #
     # l3 property

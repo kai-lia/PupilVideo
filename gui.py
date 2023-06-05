@@ -248,11 +248,11 @@ class ProjectorGUI:
         self.tk_tollernc_mm_entry.insert(0, 0.15)
         self.tk_tollernc_mm_entry.pack(side="left", expand=True, fill='both')
 
-        self.tk_TCA_XY_arcmin_mm_label = tk.Label(calibration_frame_bottom, text="TCA(X/Y)arcmin/mm")
-        self.tk_TCA_XY_arcmin_mm_label.pack(side="left", expand=True, fill='both')
-        self.tk_TCA_XY_arcmin_mm_entry = tk.Entry(calibration_frame_bottom, textvariable=self.tk_TCA_XY_arcmin_mm)
-        self.tk_TCA_XY_arcmin_mm_entry.insert(0, "3.5/3.5")
-        self.tk_TCA_XY_arcmin_mm_entry.pack(side="left", expand=True, fill='both')
+        self.tk_TCAmm_label = tk.Label(calibration_frame_bottom, text="TCA(X/Y)arcmin/mm")
+        self.tk_TCAmm_label.pack(side="left", expand=True, fill='both')
+        self.tk_TCAmm_entry = tk.Entry(calibration_frame_bottom, textvariable=self.tk_TCAmm)
+        self.tk_TCAmm_entry.insert(0, "3.5/3.5")
+        self.tk_TCAmm_entry.pack(side="left", expand=True, fill='both')
 
         video_camera_frame.mainloop()
 
@@ -532,7 +532,6 @@ class ProjectorGUI:
         self.tk_automatic_button.configure(text="Auto", command=self.tk_auto)
         if self.video_on:
             # TODO: if video is on: set camera values
-
             self.set_camera_values()
 
             return
@@ -543,7 +542,7 @@ class ProjectorGUI:
         self.CameraSettings.reset_brightness()
         self.CameraSettings.reset_iris()
         self.CameraSettings.reset_exposure()
-        self.CameraSettings.reset_exposure_mode() # sets to manual exposure
+        self.CameraSettings.reset_exposure_mode()# sets to manual exposure
         CameraSettings.get_gain()
         # TODO: make it so it will work when video is running
         return
@@ -576,7 +575,6 @@ class ProjectorGUI:
         # PupilParam.totaloffy = []
         self.tk_focus_button.configure(text="Enable TCA Correction", command=self.tk_enable_tca_correction)
 
-
     def tk_tollernc_mm(self):
         """
         global PupilParam
@@ -586,18 +584,18 @@ class ProjectorGUI:
 
         return
 
-    def tk_TCA_XY_arcmin_mm(self):
-        """
-        global PupilParam
-        load CalibrationSetting
-        Str=get(hObject,'String'); idx=strfind(Str,'/');
-        if length(idx)==1
-            CalibrationSetting(2)=str2num(Str(1:idx-1));
-            CalibrationSetting(3)=str2num(Str((idx+1):end));
-            save CalibrationSetting CalibrationSetting
-            PupilParam.TCAmmX=CalibrationSetting(2);
-            PupilParam.TCAmmY=CalibrationSetting(3);
-        end"""
+    def tk_TCAmm(self, text):
+        if len(text) == 1:
+            return
+        global PupilParam, CalibrationSetting
+        idx = text.find('/')
+
+        if len(idx) == 1:
+            CalibrationSetting[1] = float(text[:idx])
+            CalibrationSetting[2] = float(text[idx + 1:])
+            np.save('CalibrationSetting.npy', CalibrationSetting)
+            self.PupilParam.set_TCAmmX(CalibrationSetting[1])
+            self.PupilParam.set_TCAmmY(CalibrationSetting[2])
         return
 
     def tk_show_focus(self):
