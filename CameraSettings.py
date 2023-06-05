@@ -40,7 +40,7 @@ class CameraSettings:
 
     # Getter and Setter methods for exposure
     def get_exposure(self):
-        return self._exposure
+        return self.exposure
 
     def set_exposure(self, exposure):
         self.exposure = exposure
@@ -56,6 +56,9 @@ class CameraSettings:
         self.exposure_mode = exposure_mode
 
     def auto_exposure_mode(self):
+        self.exposure_mode = True
+
+    def reset_exposure_mode(self):
         self.exposure_mode = True
 
     def manual_exposure_mode(self):
@@ -82,9 +85,6 @@ class CameraSettings:
     def get_roi(self):
         return self.roi
 
-
     def set_roi(self, roi):
         self.roi = roi
-
-    # Setter functions
 

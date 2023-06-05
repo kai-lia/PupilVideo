@@ -6,6 +6,7 @@ from PIL import ImageTk
 
 import tkinter as tk
 from PIL import ImageTk, Image
+from matplotlib.widgets import Slider
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.backend_bases import key_press_handler
@@ -52,10 +53,11 @@ def exception_troubleshoot(func):
 class ProjectorGUI:
     def __init__(self):
         self.tk_root = tk.Tk()
-        self.tk_root.geometry('900x600')
+        self.tk_root.geometry('1200x600')
         self.tk_root.title('PupilVideoTrackingV2')
         self.type_pupil_file_name_prefix = ""
         self.PupilParam = PupilParam()
+        self.CameraSettings = CameraSettings()
         self.PupilTracker = None
         self.video_frame = None
         self.ax = None
@@ -81,6 +83,8 @@ class ProjectorGUI:
         right_frame = tk.Frame(self.tk_root)
         right_frame.pack(side="left", expand=True, fill='both')
         self.make_right_frame(right_frame)
+        PupilTrackingAlg()
+
 
     def make_top_frame(self, top_frame):
         """makes the top button bar, horizontal layout
@@ -146,7 +150,7 @@ class ProjectorGUI:
         self.tk_type_pupil_file_name_prefix_label.pack(expand=True, fill='both')
         self.tk_type_pupil_file_name_prefix_entry = tk.Entry(save_fps_label_frame,
                                                               textvariable=self.tk_type_pupil_file_name_prefix)
-        self.tk_type_pupil_file_name_prefix_entry.pack(side="bottom",expand=True,fill='both')
+        self.tk_type_pupil_file_name_prefix_entry.pack(side="bottom", expand=True, fill='both')
 
     def make_right_frame(self, right_frame):
         """makes the right side of screen, vertical layout
@@ -160,10 +164,11 @@ class ProjectorGUI:
         # Box for video camera settings
         video_camera_frame = tk.Frame(right_frame, highlightbackground="black", highlightthickness=2)
         video_camera_frame.pack(side="top", expand=True, fill='both')
+
         self.tk_video_camera_settings_label = tk.Label(video_camera_frame, text="Video Camera Settings")
         self.tk_video_camera_settings_label.pack(side="top")
         video_camera_frame_top = tk.Frame(video_camera_frame)
-        video_camera_frame_top.pack(side="top", fill='x')
+        video_camera_frame_top.pack(side="top",expand=True, fill='x')
         # buttons
         self.tk_automatic_button = tk.Button(video_camera_frame_top, text="Auto", command=self.tk_auto)
         self.tk_automatic_button.pack(side="left", expand=True, fill='x')
@@ -174,36 +179,52 @@ class ProjectorGUI:
         self.tk_load_settings_button = tk.Button(video_camera_frame_top, text="Load Settings", command=self.tk_load_settings)
         self.tk_load_settings_button.pack(side="left", expand=True, fill='x')
         # sliders frame
-        video_camera_frame_left = tk.Frame(video_camera_frame)
-        video_camera_frame_left.pack(side="left", expand=True, fill='both')
-        video_camera_frame_right = tk.Frame(video_camera_frame)
-        video_camera_frame_right.pack(side="left", expand=True, fill='both')
-        # sliders
-        self.tk_brightness_label = tk.Label(video_camera_frame_left, text="Brightness:")
-        self.tk_brightness_label.pack(expand=True, fill='both')
-        self.tk_brightness_slider = tk.Scale(video_camera_frame_right, from_=0, to=4095, tickinterval=0.1, orient='horizontal')
-        self.tk_brightness_slider.set(240)
-        self.tk_brightness_slider.pack(expand=True, fill='both')
+        video_camera_frame_sliders = tk.Frame(video_camera_frame)
+        video_camera_frame_sliders.pack(side="bottom", expand=False, fill='both')
 
-        self.tk_gamma_label = tk.Label(video_camera_frame_left, text="Gamma:")
-        self.tk_gamma_label.pack(expand=True, fill='both')
-        self.tk_gamma_slider = tk.Scale(video_camera_frame_right, from_=0, to=5, tickinterval=0.1, orient='horizontal')
-        self.tk_gamma_slider.set(1)
-        self.tk_gamma_slider.pack(expand=True, fill='both')
+        # TODO: fix the sliders so they are in matlab style and fit in frame
+        fig, ax = plt.subplots(figsize=(1, 1))
+        ax.axis('off')  # Hide the axes
 
-        self.tk_exposure_label = tk.Label(video_camera_frame_left, text="Exposure:")
-        self.tk_exposure_label.pack(expand=True, fill='both')
-        self.tk_exposure_slider = tk.Scale(video_camera_frame_right, from_=0, to=4, tickinterval=0.0005, orient='horizontal')
-        self.tk_exposure_slider.set(0.0333)
-        self.tk_exposure_slider.pack(expand=True, fill='both')
+        # Define the position and size of the sliders
+        slider_width = 0.3
+        slider_height = 0.02
+        slider_left = 0.45
+        slider_top = 0.9
+        slider_horizontal_pad = 0.2
 
-        self.tk_gain_label = tk.Label(video_camera_frame_left, text="Gain:")
-        self.tk_gain_label.pack(expand=True, fill='both')
-        self.tk_gain_slider = tk.Scale(video_camera_frame_right, from_=0, to=48, tickinterval=0.1, orient='horizontal')
-        self.tk_gain_slider.set(0)
-        self.tk_gain_slider.pack(expand=True, fill='both')
+        # Create the sliders
+        brightness_slider_ax = fig.add_axes([slider_left, slider_top - slider_height, slider_width, slider_height])
+        brightness_slider = Slider(brightness_slider_ax, 'Brightness', 0, 4095, valinit=240)
+        brightness_slider.label.set_fontsize(6)
 
-        # button
+        gamma_slider_ax = fig.add_axes(
+            [slider_left, slider_top - slider_height - 1 * (slider_height + slider_horizontal_pad), slider_width,
+             slider_height])
+        gamma_slider = Slider(gamma_slider_ax, 'Gamma', 0, 5, valinit=1, valfmt="%0.0f")
+        gamma_slider.label.set_fontsize(6)
+
+        exposure_slider_ax = fig.add_axes(
+            [slider_left, slider_top - slider_height - 2 * (slider_height + slider_horizontal_pad), slider_width,
+             slider_height])
+        exposure_slider = Slider(exposure_slider_ax, 'Exposure', 0, 4, valinit=0.0333)
+        exposure_slider.label.set_fontsize(6)
+
+        gain_slider_ax = fig.add_axes(
+            [slider_left, slider_top - slider_height - 3 * (slider_height + slider_horizontal_pad), slider_width,
+             slider_height])
+        gain_slider = Slider(gain_slider_ax, 'Gain', 0, 48, valinit=0)
+        gain_slider.label.set_fontsize(6)
+
+        brightness_slider.on_changed(self.tk_brightness_change)
+        gamma_slider.on_changed(self.tk_gamma_change)
+        exposure_slider.on_changed(self.tk_exposure_change)
+        gain_slider.on_changed(self.tk_gain_change)
+
+        video_canvas = FigureCanvasTkAgg(fig, master=video_camera_frame)
+        video_canvas.draw()
+        video_canvas.get_tk_widget().pack(side="top", fill='x', expand=True)
+
         self.tk_enable_tca_correction_button = tk.Button(right_frame, text="Enable TCA Correction",
                                                          command=self.tk_enable_tca_correction)
         self.tk_enable_tca_correction_button.pack()
@@ -233,30 +254,27 @@ class ProjectorGUI:
         self.tk_TCA_XY_arcmin_mm_entry.insert(0, "3.5/3.5")
         self.tk_TCA_XY_arcmin_mm_entry.pack(side="left", expand=True, fill='both')
 
+        video_camera_frame.mainloop()
+
 
     def make_middle_frame(self, middle_frame):
         # open video source (by default this will try to open the computer webcam)
         # TODO: set up video frame and graph over lay
-        """""""[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]"""
+        """[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]"""
         # creating figure
-        axis = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
-        x = y = np.array(axis)
+        fig, self.ax = plt.subplots(figsize=(3, 3))
 
-        fig, self.ax = plt.subplots()
-
-        self.ax.plot(x, y)
+        self.ax.tick_params(axis='both', which='major', labelsize=5) # change axis font size bc why not
 
         self.video_canvas = FigureCanvasTkAgg(fig, master=middle_frame)
-        self.video_canvas.draw()
+        # self.video_canvas.draw() when graphing
         # placing the toolbar on the Tkinter window
-        self.video_canvas.get_tk_widget().pack()
+        self.video_canvas.get_tk_widget().pack(side="top", fill=None, expand=False)
 
-        self.video_frame = tk.Label(middle_frame)
-        self.video_frame.pack()
+        self.video_frame = tk.Label(master=middle_frame, height=5, width=5)
+        self.video_frame.pack(side="top", fill='both', expand=True)
 
         return
-
-    ###top buttons###
 
     """ quits and exits program (button 1)
     if dataScn"""
@@ -273,7 +291,6 @@ class ProjectorGUI:
 
     """ starts video"""
     def tk_start_video(self):
-        # TODO: alex help layer graph with video import in matlab library for this https://www.mathworks.com/matlabcentral/fileexchange/68852-code-examples-from-video-processing-in-matlab
         """ also layer with existing graph so we can plot on video """
         self.camera = cv2.VideoCapture(0)
         self.video_on = True
@@ -291,7 +308,6 @@ class ProjectorGUI:
         " consistent loop until stop vid "
         if not self.video_on:
             return
-
         ret, frame = self.camera.read() # Read a frame from the video feed
         self.ax.clear()
         color_fix = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) # fixes color
@@ -319,7 +335,6 @@ class ProjectorGUI:
             self.PupilParam.set_y1(reference_y1)
             self.PupilParam.set_y2(reference_y2)
             # TODO: Save reference coordinates like matlab file
-
             self.tk_reference_button.configure(text="Unset Reference", command=self.tk_unset_reference())
         
         return
@@ -337,21 +352,16 @@ class ProjectorGUI:
             path, file = os.path.split(file_name)
             if file.startswith('RefPupil_'):
                 reference_data = sio.loadmat(file_name)
-                reference_x1 = reference_data['Refx1'][0][0]
-                reference_x2 = reference_data['Refx2'][0][0]
-                reference_y1 = reference_data['Refy1'][0][0]
-                reference_y2 = reference_data['Refy2'][0][0]
 
-                self.PupilParam.set_x1(reference_x1)
-                self.PupilParam.set_x2(reference_x2)
-                self.PupilParam.set_y1(reference_y1)
-                self.PupilParam.set_y2(reference_y2)
+                self.PupilParam.set_x1(reference_data['Refx1'][0][0])
+                self.PupilParam.set_x2(reference_data['Refx2'][0][0])
+                self.PupilParam.set_y1(reference_data['Refy1'][0][0])
+                self.PupilParam.set_y2(reference_data['Refy2'][0][0])
 
                 self.tk_reference_button.configure(text="Unset Reference", command=self.tk_unset_reference())
             else:
                 print("Invalid file name. File must start with 'RefPupil_'")
         return
-
 
     def tk_unset_reference(self):
         """unsets reference
@@ -360,7 +370,7 @@ class ProjectorGUI:
         self.PupilParam.reset_x2()
         self.PupilParam.reset_y1()
         self.PupilParam.reset_y2()
-        ##TODO: make sure box is de initilized
+        ##TODO: make sure box is de-initilized
         self.tk_reference_button.configure(text="Set Reference", command=self.tk_set_reference)
         return
 
@@ -380,30 +390,27 @@ class ProjectorGUI:
     def tk_zoom_in(self):
         return
 
-    """draws BE"""
+# BE triggering button
     def tk_draw_be(self):
-        if self.PupilParam.get_BEFlag() == 0:
-            self.PupilParam.set_BEFlag(1)
-            #TODO: set(hObject,'String','Hide BE')
-            self.tk_draw_be_button.config(text = 'Hide BE')
-            self.tk_draw_be_button.pack()
-        else:
-            self.PupilParam.set_BEFlag(0)
-            # TODO: set(hObject,'String','Draw BE')
-            self.tk_draw_be_button.config(text='Draw BE')
-            self.tk_draw_be_button.pack()
-        return
+        """draws BE"""
+        self.PupilParam.set_BEFlag(True)
+        self.tk_draw_be_button.configure(text='Hide BE', command=self.tk_hide_be)
+
+    def tk_hide_be(self):
+        """hides BE"""
+        self.PupilParam.set_BEFlag(False)
+        self.tk_draw_be_button.configure(text='Draw BE',  command=self.tk_draw_be)
 
     def tk_sync_save(self):
         """sync save"""
-        if (self.PupilParam.get_Video()):
+        if (self.PupilParam.get_video()):
             self.tk_sync_wait()
             return
         self.PupilParam.save_sync()
         self.tk_automatic_button.configure(text="Wait for Sync", command=self.tk_sync_wait)
         if len(self.PupilParam.get_DataSync()):
             date_string = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-            #TODO: Prefix = get(handles.edit3, 'String')
+            # TODO: Prefix = get(handles.edit3, 'String')
             prefix = " "
             pupil_data = self.PupilParam.get_DataSync()
             # Save PupilData to a file
@@ -422,9 +429,38 @@ class ProjectorGUI:
 
     def tk_save_video(self):
         """save video"""
-        if self.PupilParam.get_Video() == 1 and self.PupilParam.set_SavingVideo() == 0:
-            self.PupilParam.set_SavingVideo(1)
-        return
+        if self.PupilParam.get_video() and not self.PupilParam.get_saving_video():
+            self.PupilParam.set_saving_video(True)
+            self.PupilParam.set_FrameCount(1)
+            VideoToSave = []
+            start_time = datetime.datetime.now()
+
+            if not self.PupilParam.get_PTFlag():
+                self.PupilParam.set_PTFlag(True)
+                self.PupilParam.set_PTT0(datetime.datetime.now())
+                self.tk_save_pupil_tracking_button.configure(text='Recording Pupil ...')
+                self.PupilParam.set_PTData([])
+
+        else:
+            if self.PupilParam.get_video() and self.PupilParam.get_saving_video():
+                self.PupilParam.set_saving_video(False)
+                Prefix = input('Enter Prefix: ')  # Get prefix from user
+                self.tk_save_video_button.configure(text='Save Video')
+                date_string = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+                np.save(f"./VideoAndRef/{Prefix}VideoPupil_{date_string}.npy", VideoToSave)
+                VideoToSave = []
+
+                if self.PupilParam.get_PTFlag():
+                    self.PupilParam.set_PTFlag(False)
+                    self.tk_save_pupil_tracking_button.configure(text='Save Pupil Tracking')
+                    PupilData = {
+                        'Data': self.PupilParam.get_PTData(),
+                        'Pixel_calibration': self.PupilParam.get_pixel_calibration()
+                    }
+                    np.save(f"./VideoAndRef/{Prefix}DataPupil_{date_string}.npy", PupilData)
+                    self.PupilParam.set_PTData([])
+
+
 
     def tk_secs(self):
         """ with new value entry the savable frames/freq changes"""
@@ -444,6 +480,31 @@ class ProjectorGUI:
 
     def tk_save_pupil_tracking(self):
         """ values collected nothing functally needed """
+        if self.PupilParam.get_video() and not self.PupilParam.get_PTFlag():
+            self.PupilParam.set_PTFlag(True)
+            self.PupilParam.set_PTTO(datetime.datetime.now())
+            self.tk_save_pupil_tracking_button.configure(text='Recording Pupil ...')
+            block_fps = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            PupilParam.PTData = [0, 0, 0, 0, 0, block_fps]
+
+            if SYSPARAMS.board == 'm':
+                MATLABAomControl32('MarkFrame#')
+            else:
+                # marks the video frame when the subject responds.
+                netcomm('write', SYSPARAMS.netcommobj, int8('MarkFrame#'))
+
+        else:
+            if self.PupilParam.get_video() and self.PupilParam.get_PTFlag():
+                self.PupilParam.set_PTFlag(False)
+                self.tk_save_pupil_tracking_button.configure(text='Save Pupil Tracking')
+                date_string = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+                PupilData = {
+                    'Data': self.PupilParam.get_PTData(),
+                    'Pixel_calibration': self.PupilParam.get_Pixel_calibration()
+                }
+                Prefix = input('Enter Prefix: ')  # Get prefix from user
+                np.save(f"./VideoAndRef/{Prefix}DataPupil_{date_string}.npy", PupilData)
+                self.PupilParam.set_PTData([])
         return
 
     def tk_type_pupil_file_name_prefix(self):
@@ -472,28 +533,31 @@ class ProjectorGUI:
         if self.video_on:
             # TODO: if video is on: set camera values
 
+            self.set_camera_values()
+
             return
         return
 
     def tk_reset(self):
         """ resets camera values to starting values"""
-        CameraSettings.reset_brightness()
-        CameraSettings.reset_iris()
-        CameraSettings.reset_exposure()
-        CameraSettings.reset_exposure_mode() # sets to manual exposure
+        self.CameraSettings.reset_brightness()
+        self.CameraSettings.reset_iris()
+        self.CameraSettings.reset_exposure()
+        self.CameraSettings.reset_exposure_mode() # sets to manual exposure
         CameraSettings.get_gain()
-
-        #TODO: make it so it will work when video is running
+        # TODO: make it so it will work when video is running
         return
 
-    """ """
     def tk_save_settings(self):
+        """ """
+        global CameraSetting
+        CS = CameraSetting
+        np.save('CS.npy', CS)
         return
 
-    """ """
     def tk_load_settings(self):
+        """ """
         return
-
 
     def tk_enable_tca_correction(self):
         """ """
@@ -514,13 +578,27 @@ class ProjectorGUI:
 
 
     def tk_tollernc_mm(self):
-        """ """
+        """
+        global PupilParam
+        load CalibrationSetting
+        CalibrationSetting(4)=str2num(get(hObject,'String'));
+        save CalibrationSetting CalibrationSetting"""
+
         return
 
     def tk_TCA_XY_arcmin_mm(self):
-        """ """
+        """
+        global PupilParam
+        load CalibrationSetting
+        Str=get(hObject,'String'); idx=strfind(Str,'/');
+        if length(idx)==1
+            CalibrationSetting(2)=str2num(Str(1:idx-1));
+            CalibrationSetting(3)=str2num(Str((idx+1):end));
+            save CalibrationSetting CalibrationSetting
+            PupilParam.TCAmmX=CalibrationSetting(2);
+            PupilParam.TCAmmY=CalibrationSetting(3);
+        end"""
         return
-
 
     def tk_show_focus(self):
         """ shows focus """
@@ -537,33 +615,29 @@ class ProjectorGUI:
 
     ######## sliders ###########
 
-    def tk_brightness_change(self):
+    def tk_brightness_change(self, val):
         """brightness slider moved"""
-        self.CameraSettings.set_brightness(self.tk_brightness_slider)
+        self.CameraSettings.set_brightness(val)
         # TODO: if video in progress auto update value
         return
 
-    def tk_gamma_change(self):
+    def tk_gamma_change(self, val):
         """slider moved"""
-        self.CameraSettings.set_gamma(self.tk_gamma_slider)
+        self.CameraSettings.set_gamma(val)
         # TODO: if video in progress auto update value
         return
 
-    def tk_exposure_change(self):
+    def tk_exposure_change(self, val):
         """slider moved"""
-        self.CameraSettings.set_exposure(self.tk_exposure_slider)
+        self.CameraSettings.set_exposure(val)
         # TODO: if video in progress auto update value
         return
 
-    def tk_gain_change(self):
+    def tk_gain_change(self, val):
         """slider moved"""
-        self.CameraSettings.set_gain(self.tk_gain_slider)
+        self.CameraSettings.set_gain(val)
         # TODO: if video in progress auto update value
         return
-
-
-
-
 
 
     "main loop functioning for intitlization"
@@ -577,6 +651,38 @@ class ProjectorGUI:
 
     def set_PupilTracker(self, value):
         self.PupilTracker = value
+
+    def set_camera_values(self):
+        src_obj = self.camera
+        src_obj.set(cv2.CAP_PROP_BRIGHTNESS, self.CameraSettings.get_brightness())
+        src_obj.set(cv2.CAP_PROP_GAMMA, self.CameraSettings.get_iris())
+        src_obj.set(cv2.CAP_PROP_EXPOSURE, self.CameraSettings.get_exposure())
+        src_obj.set(cv2.CAP_PROP_GAIN, self.CameraSettings.get_gain())
+
+        if self.CameraSettings.get_exposure_mode() == 1:
+            src_obj.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
+            src_obj.set(cv2.CAP_PROP_AUTO_GAIN, 1)
+        else:
+            src_obj.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
+            src_obj.set(cv2.CAP_PROP_AUTO_GAIN, 0)
+
+
+        src_obj.set(cv2.CAP_PROP_POS_FRAMES, self.CameraSettings.get_roi())
+
+        frame_rate = src_obj.get(cv2.CAP_PROP_FPS)
+        exposure = src_obj.get(cv2.CAP_PROP_EXPOSURE)
+        gain = src_obj.get(cv2.CAP_PROP_GAIN)
+        gamma = src_obj.get(cv2.CAP_PROP_GAMMA)
+        exposure_auto = src_obj.get(cv2.CAP_PROP_AUTO_EXPOSURE)
+        gain_auto = src_obj.get(cv2.CAP_PROP_AUTO_GAIN)
+
+        print("Frame Rate:\t", frame_rate)
+        print("Exposure:\t", exposure)
+        print("Gain:\t\t", gain)
+        print("Gamma:\t\t", gamma)
+        print("ExposureAuto:\t", exposure_auto)
+        print("GainAuto:\t", gain_auto)
+
 
 """ initializes and runs entirety of code"""
 if __name__ == "__main__":

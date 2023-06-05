@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 
 def TrackPupilV2020_ExtQuarter_Reflection(Vt, Graphic):
     # Initialize variables
-
     xc = -1
     yc = -1
     Error = -1
