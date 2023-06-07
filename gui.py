@@ -17,16 +17,18 @@ from tkinter import *
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,
 NavigationToolbar2Tk)
-from CameraSettings import CalibrationSettings
+from data_structures import CameraSettings
+from data_structures import CalibrationSettings
 import os
-from PupilParam import *
-from CameraSettings import *
+import PupilTrackingAlg
+from data_structures import *
 from tkinter import simpledialog
 import sys
 import datetime
 import matplotlib.pyplot as plt; plt.rcdefaults()
 import numpy as np
 from matplotlib.widgets import Slider
+from PupilParam import *
 
 global SYSPARAMS
 import tkinter.filedialog
@@ -54,11 +56,11 @@ def exception_troubleshoot(func):
 class ProjectorGUI:
     def __init__(self):
         self.tk_root = tk.Tk()
-        self.tk_root.geometry('1200x600')
+        self.tk_root.geometry('1100x600')
         self.tk_root.title('PupilVideoTrackingV2')
         self.type_pupil_file_name_prefix = ""
         self.PupilParam = PupilParam()
-        self.CalibrationSettings = PupilParam.CalibrationSettings()
+        self.CalibrationSettings = CalibrationSettings()
         self.CameraSettings = CameraSettings()
         self.PupilTracker = None
         self.video_frame = None
@@ -85,7 +87,8 @@ class ProjectorGUI:
         right_frame = tk.Frame(self.tk_root)
         right_frame.pack(side="left", expand=True, fill='both')
         self.make_right_frame(right_frame)
-        PupilTrackingAlg()
+        
+        # self.PupilTrackingAlg(PupilParam, CalibrationSettings, CameraSettings)
 
 
     def make_top_frame(self, top_frame):
@@ -257,7 +260,6 @@ class ProjectorGUI:
 
     def make_middle_frame(self, middle_frame):
         # open video source (by default this will try to open the computer webcam)
-        """[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]"""
         # creating figure
         fig, self.ax = plt.subplots(figsize=(5, 5))
 
@@ -302,14 +304,13 @@ class ProjectorGUI:
         self.PupilParam.set_vidRes([width, height])
          
        # sets vid Calibration factors
-        self.PupilParam.set_Pixel_calibration(self.CalibrationSettings.get_pixel_calibration())
+        self.PupilParam.set_pixel_calibration(self.CalibrationSettings.get_pixel_calibration())
         self.PupilParam.set_TCAmmX(self.CalibrationSettings.get_TCAmmX())
         self.PupilParam.set_TCAmmY(self.CalibrationSettings.get_TCAmmY())
         self.PupilParam.set_tolerated_pupil_dist(self.CalibrationSettings.get_tolerated_pupil_dist())
         
-        
         #set the plot values for future work
-        self.PupilParam.set_l3(self.ax.plot(1,1))
+        self.set_plots()
 
         self.video_on = True
         self.video_stream()
@@ -328,9 +329,9 @@ class ProjectorGUI:
         if not self.video_on:
             return
         ret, frame = self.camera.read() # Read a frame from the video feed
-        self.ax.clear()
+        # self.ax.clear() idk lolz keeping l plots
         color_fix = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) # fixes color
-        self.ax.imshow(frame)
+        self.ax.imshow(color_fix)
         self.video_canvas.draw()
         self.video_canvas.get_tk_widget().pack()
 
@@ -339,31 +340,33 @@ class ProjectorGUI:
         self.video_frame.after(1, self.video_stream)
 
     def tk_set_reference(self):
-        """sets reference"""
-
-        """Get mouse coordinates then set reference to it"""
-        def set_reference_helper(event):
-            x, y = event.x, event.y
-            reference_x1 = round(x)-30
-            reference_x2 = round(x)+30
-            reference_y1 = round(y)-30
-            reference_y2 = round(y)-30
-            
-            self.PupilParam.set_x1(reference_x1)
-            self.PupilParam.set_x2(reference_x2)
-            self.PupilParam.set_y1(reference_y1)
-            self.PupilParam.set_y2(reference_y2)
-            # TODO: Save reference coordinates like matlab file
-            self.tk_reference_button.configure(text="Unset Reference", command=self.tk_unset_reference())
+        """sets reference
+        Get mouse coordinates then set reference to it"""
+        val = plt.ginput(1)[0]
+        x = val[0]
+        y = val[1]
         
-        return
+        ref_x1 = round(x)-30
+        ref_x2 = round(x)+30
+        ref_y1 = round(y)-30
+        ref_y2 = round(y)-30
+        
+        self.PupilParam.set_x1(ref_x1)
+        self.PupilParam.set_x2(ref_x2)
+        self.PupilParam.set_y1(ref_y1)
+        self.PupilParam.set_y2(ref_y2)
+        
+        date_string = time.strftime('%Y-%m-%d_%H-%M-%S')
+        # TODO: Save reference coordinates like matlab file
+        # np.savez('./VideoAndRef/RefPupil_' + date_string, Refx1=ref_x1, Refx2=ref_x2, Refy1=ref_y1, Refy2=ref_y2)
+    
+        self.tk_reference_button.configure(text="Unset Reference", command=self.tk_unset_reference)
 
     def tk_load_reference(self):
         """loads then sets reference from a RefPupil_ file
             after, set reference button should now be unset reference
         """
         self.tk_root.withdraw()
-
         file_name = tk.filedialog.askopenfilename(title='Select RefPupil file', initialdir=os.getcwd())
 
         if file_name:
@@ -377,7 +380,7 @@ class ProjectorGUI:
                 self.PupilParam.set_y1(reference_data['Refy1'][0][0])
                 self.PupilParam.set_y2(reference_data['Refy2'][0][0])
 
-                self.tk_reference_button.configure(text="Unset Reference", command=self.tk_unset_reference())
+                self.tk_reference_button.configure(text="Unset Reference", command=self.tk_unset_reference)
             else:
                 print("Invalid file name. File must start with 'RefPupil_'")
         return
@@ -656,22 +659,17 @@ class ProjectorGUI:
             self.camera.set(cv2.CAP_PROP_GAIN, val)
             print(val)
         return
+    
+    def set_plots(self):
+        """sets the l,p,r for future algorithm work"""
+        plot_attributes = ['l3', 'l4', 'l5', 'l6', 'l7', 'l8', 'p1', 'v1', 'v2', 'v3',
+                           'v4', 'c1', 'c2', 'c3', 'c4', 'c5', 'r1', 'r2', 'r3', 'r4']
+        for attr in plot_attributes:
+            setattr(self.PupilParam, attr, self.ax.plot(1, 1)[0])
 
-
-    "main loop functioning for intitlization"
-    def main_loop(self):
-        self.tk_root.mainloop()
-
-
-# Getter and Setter methods for PupilTracker
-    def get_PupilTracker(self):
-        return self.PupilTracker
-
-    def set_PupilTracker(self, value):
-        self.PupilTracker = value
 
     def set_camera_values(self):
-        
+        """used when setting values mid video"""
         self.camera.set(cv2.CAP_PROP_BRIGHTNESS, self.CameraSettings.get_brightness())
         self.camera.set(cv2.CAP_PROP_GAMMA, self.CameraSettings.get_gamma())
         self.camera.set(cv2.CAP_PROP_EXPOSURE, self.CameraSettings.get_exposure())
@@ -695,7 +693,17 @@ class ProjectorGUI:
         print("Gain:\t\t", gain)
         print("Gamma:\t\t", gamma)
         print("ExposureAuto:\t", exposure_auto)
+        
+        # Getter and Setter methods for PupilTracker
+    def get_PupilTracker(self):
+        return self.PupilTracker
 
+    def set_PupilTracker(self, value):
+        self.PupilTracker = value
+        
+    def main_loop(self):
+        "main loop functioning for intitlization"
+        self.tk_root.mainloop()
 
 """ initializes and runs entirety of code"""
 if __name__ == "__main__":

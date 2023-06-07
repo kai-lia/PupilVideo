@@ -18,7 +18,6 @@ class PupilParam:
         self.Flag = False
         self.BEFlag = False
         self.PTFlag = False
-        self.PTTO = False
         self.PTData = None
 
         # video state
@@ -35,11 +34,17 @@ class PupilParam:
         self.reftime = time.process_time() # Note: 'clock' function in Python returns the CPU time, not the wall time like in MATLAB
         self.idx_reftime = 11
         self.fps = [0] * 10
-        self.vidRes = 1024
+        self.vidRes = []
         self.focus = False # note means focus is shown
         self.TCA_comp = False
         self.Ltotaloffx = 1
         self.DataSync = None
+        
+        #coreslates for Calibration Settings
+        self.pixel_calibration = None
+        self.TCAmmX = None
+        self.TCAmmY = None
+        self.tolerated_pupil_dist = None
 
         # l plots: doing (None,)*int to multi declare without dependencies
         self.l3, self.l4, self.l5, self.l6, self.l7, self.l8 = (None,)*6
@@ -197,6 +202,14 @@ class PupilParam:
 
     def hide_focus(self):
         self.focus = False
+    
+    # vidRes
+    def get_vidRes(self):
+        return self.vidRes
+
+    def set_vidRes(self, vidRes):
+        self.vidRes = vidRes
+       
 
     # enable and disable for TCA computation
     def get_TCA_comp(self):
@@ -236,6 +249,40 @@ class PupilParam:
 
     def set_PTData(self, PTData):
         self.PTData = PTData
+        
+## calibration stuff 
+    # getter setter 
+    def get_pixel_calibration(self):
+        return self.pixel_calibration
+
+    def set_pixel_calibration(self, pixel_calibration):
+        self.pixel_calibration
+        
+    # getter setter 
+    def get_TCAmmX(self):
+        return self.TCAmmX
+
+    def set_TCAmmX(self, TCAmmX):
+        self.TCAmmX= TCAmmX 
+        
+    # getter setter 
+    def get_TCAmmY(self):
+        return self.TCAmmY 
+
+    def set_TCAmmY (self, TCAmmY ):
+        self.TCAmmY = TCAmmY  
+        
+    # getter setter 
+    def get_tolerated_pupil_dist(self):
+        return self.tolerated_pupil_dist
+
+    def set_tolerated_pupil_dist(self, tolerated_pupil_dist):
+        self.tolerated_pupil_dist = tolerated_pupil_dist    
+        
+        
+        
+        
+        
 
 # ### Getter and Setters for Vectors ### #
     # l3 property

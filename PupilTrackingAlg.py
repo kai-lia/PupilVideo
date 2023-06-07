@@ -6,7 +6,10 @@ global PupilParams
 global VideoToSave
 
 
-def PupilTrackingAlg(self, event, himage):
+def PupilTrackingAlg(self, PupilParam, CalibrationSettings, CameraSettings):
+    self.PupilParam = PupilParam
+    self.CalibrationSettings = CalibrationSettings
+    self.CameraSettings = CameraSettings
     DEPTH_OF_BUFFER = 5
 
     kernel_size = event.Data.shape # size of the structuring element for morphological operations
