@@ -1,10 +1,13 @@
 class CameraSettings:
     def __init__(self):
+        # the 4 slider values
         self.brightness = 240
-        self.iris = 1
+        self.gamma = 1
         self.exposure = 0.0333
-        self.exposure_mode = True
         self.gain = 0
+
+        self.exposure_mode = True
+        self.iris = 1
         self.video_format = 'RGB24 (1216x1024) [Skipping 2x]'
         self.roi = [0, 0, 1216, 1024]
 
