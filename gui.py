@@ -17,6 +17,7 @@ from tkinter import *
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,
 NavigationToolbar2Tk)
+from CameraSettings import CalibrationSettings
 import os
 from PupilParam import *
 from CameraSettings import *
@@ -57,6 +58,7 @@ class ProjectorGUI:
         self.tk_root.title('PupilVideoTrackingV2')
         self.type_pupil_file_name_prefix = ""
         self.PupilParam = PupilParam()
+        self.CalibrationSettings = PupilParam.CalibrationSettings()
         self.CameraSettings = CameraSettings()
         self.PupilTracker = None
         self.video_frame = None
@@ -197,7 +199,6 @@ class ProjectorGUI:
         brightness_slider_ax = fig.add_axes([slider_left, slider_top - slider_height, slider_width, slider_height])
         brightness_slider = Slider(brightness_slider_ax, 'Brightness', 0, 4095, valinit=240)
        
-
         gamma_slider_ax = fig.add_axes(
             [slider_left, slider_top - slider_height - 1 * (slider_height + slider_horizontal_pad), slider_width,
              slider_height])
@@ -276,25 +277,39 @@ class ProjectorGUI:
     if dataScn"""
     def tk_quit(self):
         self.set_PupilTracker(0);
-        date_string = time.strftime('%Y-%m-%d_%H-%M-%S')
-
         if self.PupilParam.get_DataSync() is not None:
+            date_string = time.strftime('%Y-%m-%d_%H-%M-%S')
             pupil_data = self.PupilParam.get_DataSync()
             file = open(f'./VideoAndRef/Trial_DataPupil_{self.get_type_pupil_file_name_prefix()}_{date_string}')
             file.write(pupil_data)
             file.close()
         self.tk_root.destroy()
 
-    """ starts video"""
+   
     def tk_start_video(self):
-        """ also layer with existing graph so we can plot on video """
+        """starts video
+        also layer with existing graph so we can plot on video """
         self.camera = cv2.VideoCapture(0)
-        
         # sets basic color settings
         self.camera.set(cv2.CAP_PROP_BRIGHTNESS, self.CameraSettings.get_brightness())
         self.camera.set(cv2.CAP_PROP_GAMMA, self.CameraSettings.get_gamma())
         self.camera.set(cv2.CAP_PROP_EXPOSURE, self.CameraSettings.get_exposure())
         self.camera.set(cv2.CAP_PROP_GAIN, self.CameraSettings.get_gain())
+        
+        # get resolution
+        width = int(self.camera.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(self.camera.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        self.PupilParam.set_vidRes([width, height])
+         
+       # sets vid Calibration factors
+        self.PupilParam.set_Pixel_calibration(self.CalibrationSettings.get_pixel_calibration())
+        self.PupilParam.set_TCAmmX(self.CalibrationSettings.get_TCAmmX())
+        self.PupilParam.set_TCAmmY(self.CalibrationSettings.get_TCAmmY())
+        self.PupilParam.set_tolerated_pupil_dist(self.CalibrationSettings.get_tolerated_pupil_dist())
+        
+        
+        #set the plot values for future work
+        self.PupilParam.set_l3(self.ax.plot(1,1))
 
         self.video_on = True
         self.video_stream()
@@ -304,7 +319,8 @@ class ProjectorGUI:
     def tk_stop_video(self):
         """ stops video"""
         self.video_on = False
-
+        self.camera.release()
+        cv2.destroyAllWindows()
         self.tk_start_video_button.configure(text="Start Video", command=self.tk_start_video)
 
     def video_stream(self):
