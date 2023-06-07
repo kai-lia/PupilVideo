@@ -182,8 +182,8 @@ class ProjectorGUI:
         video_camera_frame_sliders = tk.Frame(video_camera_frame)
         video_camera_frame_sliders.pack(side="bottom", expand=False, fill='both')
 
-        # TODO: fix the sliders so they are in matlab style and fit in frame
-        fig, ax = plt.subplots(figsize=(1, 1))
+        # sliders
+        fig, ax = plt.subplots(figsize=(2, 2))
         ax.axis('off')  # Hide the axes
 
         # Define the position and size of the sliders
@@ -196,25 +196,22 @@ class ProjectorGUI:
         # Create the sliders
         brightness_slider_ax = fig.add_axes([slider_left, slider_top - slider_height, slider_width, slider_height])
         brightness_slider = Slider(brightness_slider_ax, 'Brightness', 0, 4095, valinit=240)
-        brightness_slider.label.set_fontsize(6)
+       
 
         gamma_slider_ax = fig.add_axes(
             [slider_left, slider_top - slider_height - 1 * (slider_height + slider_horizontal_pad), slider_width,
              slider_height])
         gamma_slider = Slider(gamma_slider_ax, 'Gamma', 0, 5, valinit=1, valfmt="%0.0f")
-        gamma_slider.label.set_fontsize(6)
 
         exposure_slider_ax = fig.add_axes(
             [slider_left, slider_top - slider_height - 2 * (slider_height + slider_horizontal_pad), slider_width,
              slider_height])
         exposure_slider = Slider(exposure_slider_ax, 'Exposure', 0, 4, valinit=0.0333)
-        exposure_slider.label.set_fontsize(6)
 
         gain_slider_ax = fig.add_axes(
             [slider_left, slider_top - slider_height - 3 * (slider_height + slider_horizontal_pad), slider_width,
              slider_height])
         gain_slider = Slider(gain_slider_ax, 'Gain', 0, 48, valinit=0)
-        gain_slider.label.set_fontsize(6)
 
         brightness_slider.on_changed(self.tk_brightness_change)
         gamma_slider.on_changed(self.tk_gamma_change)
@@ -248,21 +245,20 @@ class ProjectorGUI:
         self.tk_tollernc_mm_entry.insert(0, 0.15)
         self.tk_tollernc_mm_entry.pack(side="left", expand=True, fill='both')
 
-        self.tk_TCAmm_label = tk.Label(calibration_frame_bottom, text="TCA(X/Y)arcmin/mm")
-        self.tk_TCAmm_label.pack(side="left", expand=True, fill='both')
-        self.tk_TCAmm_entry = tk.Entry(calibration_frame_bottom, textvariable=self.tk_TCAmm)
-        self.tk_TCAmm_entry.insert(0, "3.5/3.5")
-        self.tk_TCAmm_entry.pack(side="left", expand=True, fill='both')
+        self.tk_TCA_XY_arcmin_mm_label = tk.Label(calibration_frame_bottom, text="TCA(X/Y)arcmin/mm")
+        self.tk_TCA_XY_arcmin_mm_label.pack(side="left", expand=True, fill='both')
+        self.tk_TCA_XY_arcmin_mm_entry = tk.Entry(calibration_frame_bottom, textvariable=self.tk_TCA_XY_arcmin_mm)
+        self.tk_TCA_XY_arcmin_mm_entry.insert(0, "3.5/3.5")
+        self.tk_TCA_XY_arcmin_mm_entry.pack(side="left", expand=True, fill='both')
 
         video_camera_frame.mainloop()
 
 
     def make_middle_frame(self, middle_frame):
         # open video source (by default this will try to open the computer webcam)
-        # TODO: set up video frame and graph over lay
         """[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]"""
         # creating figure
-        fig, self.ax = plt.subplots(figsize=(3, 3))
+        fig, self.ax = plt.subplots(figsize=(5, 5))
 
         self.ax.tick_params(axis='both', which='major', labelsize=5) # change axis font size bc why not
 
@@ -293,6 +289,13 @@ class ProjectorGUI:
     def tk_start_video(self):
         """ also layer with existing graph so we can plot on video """
         self.camera = cv2.VideoCapture(0)
+        
+        # sets basic color settings
+        self.camera.set(cv2.CAP_PROP_BRIGHTNESS, self.CameraSettings.get_brightness())
+        self.camera.set(cv2.CAP_PROP_GAMMA, self.CameraSettings.get_gamma())
+        self.camera.set(cv2.CAP_PROP_EXPOSURE, self.CameraSettings.get_exposure())
+        self.camera.set(cv2.CAP_PROP_GAIN, self.CameraSettings.get_gain())
+
         self.video_on = True
         self.video_stream()
 
@@ -311,7 +314,7 @@ class ProjectorGUI:
         ret, frame = self.camera.read() # Read a frame from the video feed
         self.ax.clear()
         color_fix = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) # fixes color
-        self.ax.imshow(color_fix)
+        self.ax.imshow(frame)
         self.video_canvas.draw()
         self.video_canvas.get_tk_widget().pack()
 
@@ -485,7 +488,7 @@ class ProjectorGUI:
             self.PupilParam.set_PTTO(datetime.datetime.now())
             self.tk_save_pupil_tracking_button.configure(text='Recording Pupil ...')
             block_fps = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            PupilParam.PTData = [0, 0, 0, 0, 0, block_fps]
+            self.PupilParam.set_PTData([0, 0, 0, 0, 0, block_fps])
 
             if SYSPARAMS.board == 'm':
                 MATLABAomControl32('MarkFrame#')
@@ -518,32 +521,25 @@ class ProjectorGUI:
     def tk_auto(self):
         """ makes controls of video settings automatic """
         self.CameraSettings.auto_exposure_mode()
-        self.tk_automatic_button.configure(text="Manual", command=self.tk_manual)
-
         if self.video_on:
-            # TODO: if video is on: set camera values
-
+            self.set_camera_values()
             return
-        return
+        self.tk_automatic_button.configure(text="Manual", command=self.tk_manual)
 
     def tk_manual(self):
         """ makes controls of video settings manual """
         self.CameraSettings.manual_exposure_mode()
-        self.tk_automatic_button.configure(text="Auto", command=self.tk_auto)
         if self.video_on:
-            # TODO: if video is on: set camera values
             self.set_camera_values()
-
-            return
-        return
-
+        self.tk_automatic_button.configure(text="Auto", command=self.tk_auto)
+        
     def tk_reset(self):
         """ resets camera values to starting values"""
         self.CameraSettings.reset_brightness()
         self.CameraSettings.reset_iris()
         self.CameraSettings.reset_exposure()
-        self.CameraSettings.reset_exposure_mode()# sets to manual exposure
-        CameraSettings.get_gain()
+        self.CameraSettings.reset_exposure_mode() # sets to manual exposure
+        self.CameraSettings.get_gain()
         # TODO: make it so it will work when video is running
         return
 
@@ -575,6 +571,7 @@ class ProjectorGUI:
         # PupilParam.totaloffy = []
         self.tk_focus_button.configure(text="Enable TCA Correction", command=self.tk_enable_tca_correction)
 
+
     def tk_tollernc_mm(self):
         """
         global PupilParam
@@ -584,18 +581,18 @@ class ProjectorGUI:
 
         return
 
-    def tk_TCAmm(self, text):
-        if len(text) == 1:
-            return
-        global PupilParam, CalibrationSetting
-        idx = text.find('/')
-
-        if len(idx) == 1:
-            CalibrationSetting[1] = float(text[:idx])
-            CalibrationSetting[2] = float(text[idx + 1:])
-            np.save('CalibrationSetting.npy', CalibrationSetting)
-            self.PupilParam.set_TCAmmX(CalibrationSetting[1])
-            self.PupilParam.set_TCAmmY(CalibrationSetting[2])
+    def tk_TCA_XY_arcmin_mm(self):
+        """
+        global PupilParam
+        load CalibrationSetting
+        Str=get(hObject,'String'); idx=strfind(Str,'/');
+        if length(idx)==1
+            CalibrationSetting(2)=str2num(Str(1:idx-1));
+            CalibrationSetting(3)=str2num(Str((idx+1):end));
+            save CalibrationSetting CalibrationSetting
+            PupilParam.TCAmmX=CalibrationSetting(2);
+            PupilParam.TCAmmY=CalibrationSetting(3);
+        end"""
         return
 
     def tk_show_focus(self):
@@ -616,25 +613,32 @@ class ProjectorGUI:
     def tk_brightness_change(self, val):
         """brightness slider moved"""
         self.CameraSettings.set_brightness(val)
-        # TODO: if video in progress auto update value
+        if self.video_on:
+            self.camera.set(cv2.CAP_PROP_BRIGHTNESS, val)
         return
 
     def tk_gamma_change(self, val):
         """slider moved"""
         self.CameraSettings.set_gamma(val)
-        # TODO: if video in progress auto update value
+        if  self.video_on:
+            self.camera.set(cv2.CAP_PROP_GAMMA, val)
+            print(val)
         return
 
     def tk_exposure_change(self, val):
         """slider moved"""
         self.CameraSettings.set_exposure(val)
-        # TODO: if video in progress auto update value
+        if self.video_on:
+            self.camera.set(cv2.CAP_PROP_EXPOSURE, val)
+            print(val)
         return
 
     def tk_gain_change(self, val):
         """slider moved"""
         self.CameraSettings.set_gain(val)
-        # TODO: if video in progress auto update value
+        if self.video_on:
+            self.camera.set(cv2.CAP_PROP_GAIN, val)
+            print(val)
         return
 
 
@@ -651,35 +655,30 @@ class ProjectorGUI:
         self.PupilTracker = value
 
     def set_camera_values(self):
-        src_obj = self.camera
-        src_obj.set(cv2.CAP_PROP_BRIGHTNESS, self.CameraSettings.get_brightness())
-        src_obj.set(cv2.CAP_PROP_GAMMA, self.CameraSettings.get_iris())
-        src_obj.set(cv2.CAP_PROP_EXPOSURE, self.CameraSettings.get_exposure())
-        src_obj.set(cv2.CAP_PROP_GAIN, self.CameraSettings.get_gain())
+        
+        self.camera.set(cv2.CAP_PROP_BRIGHTNESS, self.CameraSettings.get_brightness())
+        self.camera.set(cv2.CAP_PROP_GAMMA, self.CameraSettings.get_gamma())
+        self.camera.set(cv2.CAP_PROP_EXPOSURE, self.CameraSettings.get_exposure())
+        self.camera.set(cv2.CAP_PROP_GAIN, self.CameraSettings.get_gain())
 
-        if self.CameraSettings.get_exposure_mode() == 1:
-            src_obj.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
-            src_obj.set(cv2.CAP_PROP_AUTO_GAIN, 1)
+        if self.CameraSettings.get_exposure_mode():
+            self.camera.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
         else:
-            src_obj.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
-            src_obj.set(cv2.CAP_PROP_AUTO_GAIN, 0)
+            self.camera.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
+        # TODO: Fix this
+       # self.camera.set(cv2.CAP_PROP_POS_FRAMES, self.CameraSettings.get_roi())
 
-
-        src_obj.set(cv2.CAP_PROP_POS_FRAMES, self.CameraSettings.get_roi())
-
-        frame_rate = src_obj.get(cv2.CAP_PROP_FPS)
-        exposure = src_obj.get(cv2.CAP_PROP_EXPOSURE)
-        gain = src_obj.get(cv2.CAP_PROP_GAIN)
-        gamma = src_obj.get(cv2.CAP_PROP_GAMMA)
-        exposure_auto = src_obj.get(cv2.CAP_PROP_AUTO_EXPOSURE)
-        gain_auto = src_obj.get(cv2.CAP_PROP_AUTO_GAIN)
+        frame_rate = self.camera.get(cv2.CAP_PROP_FPS)
+        exposure = self.camera.get(cv2.CAP_PROP_EXPOSURE)
+        gain = self.camera.get(cv2.CAP_PROP_GAIN)
+        gamma = self.camera.get(cv2.CAP_PROP_GAMMA)
+        exposure_auto = self.camera.get(cv2.CAP_PROP_AUTO_EXPOSURE)
 
         print("Frame Rate:\t", frame_rate)
         print("Exposure:\t", exposure)
         print("Gain:\t\t", gain)
         print("Gamma:\t\t", gamma)
         print("ExposureAuto:\t", exposure_auto)
-        print("GainAuto:\t", gain_auto)
 
 
 """ initializes and runs entirety of code"""
