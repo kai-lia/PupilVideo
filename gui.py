@@ -591,13 +591,10 @@ class ProjectorGUI:
         self.tk_focus_button.configure(text="Enable TCA Correction", command=self.tk_enable_tca_correction)
 
 
-    def tk_tollernc_mm(self):
-        """
-        global PupilParam
-        load CalibrationSetting
-        CalibrationSetting(4)=str2num(get(hObject,'String'));
-        save CalibrationSetting CalibrationSetting"""
-
+    def tk_tollernc_mm(self, val):
+        """"""
+        self.CalibrationSetting.set_tolerated_pupil_diststr2num(val)
+        
         return
 
     def tk_TCA_XY_arcmin_mm(self):
