@@ -8,7 +8,7 @@ class PupilParam:
         self.y1 = -1
         self.y2 = -1
 
-        self.TrackError = -1
+        self.track_error = -1
         self.totaloffx = []
         self.totaloffy = []
         self.graylevel = 255
@@ -41,7 +41,7 @@ class PupilParam:
         self.DataSync = None
         
         #coreslates for Calibration Settings
-        self.pixel_calibration = None
+        self.pixel_calibration = 49.5517721152208 
         self.TCAmmX = None
         self.TCAmmY = None
         self.tolerated_pupil_dist = None
@@ -99,14 +99,14 @@ class PupilParam:
         self.y2 = -1
 
     # Getter and Setter for Track Error
-    def get_TrackError(self):
-        return self.TrackError
+    def get_track_error(self):
+        return self.track_error
 
-    def set_TrackError(self, TrackError):
-        self.TrackError = TrackError
+    def set_trackError(self, track_error):
+        self.track_error = track_error
 
     def reset_TrackError(self):
-        self.TrackError = -10
+        self.track_error = -1
 
     # Getter and Setter methods for graylevel
     def get_gray_level(self):
@@ -195,6 +195,9 @@ class PupilParam:
 
     def enable_tracking(self):
         self.tracking = True
+        
+    def get_tracking(self):
+        return self.tracking
 
     # showing and hiding focus
     def show_focus(self):

@@ -123,4 +123,63 @@ class CalibrationSettings:
   
     def set_tolerated_pupil_dist(self, tolerated_pupil_dist):
         self.tolerated_pupil_dist = tolerated_pupil_dist
-    
+      
+class SysParams:
+    def __init__(self):
+        self.pupil_duration = 0
+        self.pupil_camera_fps = 0
+        self.pupil_diff_x = []
+        self.pupil_diff_y = []
+        self.pixel_per_deg = 0
+        self.real_system = 0
+        self.net_comm_obj = None
+        # Add other parameters as needed
+
+    # Getter and Setter for pupil_duration
+    def get_pupil_duration(self):
+        return self.pupil_duration
+
+    def set_pupil_duration(self, pupil_duration):
+        self.pupil_duration = pupil_duration
+
+    # Getter and Setter for pupil_camera_fps
+    def get_pupil_camera_fps(self):
+        return self.pupil_camera_fps
+
+    def set_pupil_camera_fps(self, pupil_camera_fps):
+        self.pupil_camera_fps = pupil_camera_fps
+
+    # Getter and Setter for pupil_diff_x
+    def get_pupil_diff_x(self):
+        return self.pupil_diff_x
+
+    def set_pupil_diff_x(self, pupil_diff_x):
+        self.pupil_diff_x = pupil_diff_x
+
+    # Getter and Setter for pupil_diff_y
+    def get_pupil_diff_y(self):
+        return self.pupil_diff_y
+
+    def set_pupil_diff_y(self, pupil_diff_y):
+        self.pupil_diff_y = pupil_diff_y 
+
+    # Getter and Setter for pixel_per_deg
+    def get_pixel_per_deg(self):
+        return self.pixel_per_deg
+
+    def set_pixel_per_deg(self, pixel_per_deg):
+        self.pixel_per_deg = pixel_per_deg
+
+    # Getter and Setter for real_system
+    def get_real_system(self):
+        return self.real_system
+
+    def set_real_system(self, real_system):
+        self.real_system = real_system
+
+    # Getter and Setter for net_comm_obj
+    def get_net_comm_obj(self):
+        return self.net_comm_obj
+
+    def set_net_comm_obj(self, net_comm_obj):
+        self.net_comm_obj = net_comm_obj

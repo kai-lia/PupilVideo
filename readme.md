@@ -60,6 +60,7 @@ Here's why:
 
 If checking out the orginal code here is a translation guide
 
+Buttons 
 | Original Matlab | Current Code |
 | ----------- | ----------- |
 | Button 1 | Quit |
@@ -96,9 +97,6 @@ Edit Translations
 | Edit 3 | Type Pupil File name Prefix |
 | Edit 6 | calibrations/tollernc(.mm) |
 | Edit 7 | TCA |
-
-
-
 
 
 

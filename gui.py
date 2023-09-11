@@ -5,6 +5,11 @@ import numpy as np
 from PIL import ImageTk
 
 import tkinter as tk
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
+import numpy as np
+
+import tkinter as tk
 from PIL import ImageTk, Image
 from matplotlib.widgets import Slider
 import matplotlib.pyplot as plt
@@ -20,8 +25,7 @@ NavigationToolbar2Tk)
 from data_structures import CameraSettings
 from data_structures import CalibrationSettings
 import os
-import PupilTrackingAlg
-from data_structures import *
+from PupilTrackingAlg import PupilTrackingAlg
 from tkinter import simpledialog
 import sys
 import datetime
@@ -29,6 +33,7 @@ import matplotlib.pyplot as plt; plt.rcdefaults()
 import numpy as np
 from matplotlib.widgets import Slider
 from PupilParam import *
+from SYSPARAMS import *
 
 global SYSPARAMS
 import tkinter.filedialog
@@ -60,6 +65,7 @@ class ProjectorGUI:
         self.tk_root.title('PupilVideoTrackingV2')
         self.type_pupil_file_name_prefix = ""
         self.PupilParam = PupilParam()
+        self.SYSPARAMS = SYSPARAMS()
         self.CalibrationSettings = CalibrationSettings()
         self.CameraSettings = CameraSettings()
         self.PupilTracker = None
@@ -67,6 +73,7 @@ class ProjectorGUI:
         self.ax = None
         self.camera = None # setting camera for my mac is 0
         self.video_on = False
+        self.selector = None
 
         # Create top, left, middle, and right frames formatting
         top_frame = tk.Frame(self.tk_root)
@@ -87,9 +94,7 @@ class ProjectorGUI:
         right_frame = tk.Frame(self.tk_root)
         right_frame.pack(side="left", expand=True, fill='both')
         self.make_right_frame(right_frame)
-        
         # self.PupilTrackingAlg(PupilParam, CalibrationSettings, CameraSettings)
-
 
     def make_top_frame(self, top_frame):
         """makes the top button bar, horizontal layout
@@ -262,9 +267,7 @@ class ProjectorGUI:
         # open video source (by default this will try to open the computer webcam)
         # creating figure
         fig, self.ax = plt.subplots(figsize=(5, 5))
-
         self.ax.tick_params(axis='both', which='major', labelsize=5) # change axis font size bc why not
-
         self.video_canvas = FigureCanvasTkAgg(fig, master=middle_frame)
         # self.video_canvas.draw() when graphing
         # placing the toolbar on the Tkinter window
@@ -272,12 +275,9 @@ class ProjectorGUI:
 
         self.video_frame = tk.Label(master=middle_frame, height=5, width=5)
         self.video_frame.pack(side="top", fill='both', expand=True)
-
-        return
-
-    """ quits and exits program (button 1)
-    if dataScn"""
+    
     def tk_quit(self):
+        """Button 1: quits and exits program (button 1) if dataScn will save the file"""
         self.set_PupilTracker(0);
         if self.PupilParam.get_DataSync() is not None:
             date_string = time.strftime('%Y-%m-%d_%H-%M-%S')
@@ -287,9 +287,8 @@ class ProjectorGUI:
             file.close()
         self.tk_root.destroy()
 
-   
     def tk_start_video(self):
-        """starts video
+        """Button 2: starts video
         also layer with existing graph so we can plot on video """
         self.camera = cv2.VideoCapture(0)
         # sets basic color settings
@@ -302,6 +301,8 @@ class ProjectorGUI:
         width = int(self.camera.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(self.camera.get(cv2.CAP_PROP_FRAME_HEIGHT))
         self.PupilParam.set_vidRes([width, height])
+
+        # gets # color bands to obtain and sets
          
        # sets vid Calibration factors
         self.PupilParam.set_pixel_calibration(self.CalibrationSettings.get_pixel_calibration())
@@ -329,9 +330,15 @@ class ProjectorGUI:
         if not self.video_on:
             return
         ret, frame = self.camera.read() # Read a frame from the video feed
+        
+        if not ret:  # If the frame isn't read correctly, just return
+            return
+        
+        x1, x2, y1, y2, error = PupilTrackingAlg(frame, self.PupilParam, self.SYSPARAMS)
+        
         # self.ax.clear() idk lolz keeping l plots
         color_fix = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) # fixes color
-        self.ax.imshow(color_fix)
+        self.ax.imshow(color_fix, aspect='auto')  # Display the frame
         self.video_canvas.draw()
         self.video_canvas.get_tk_widget().pack()
 
@@ -340,11 +347,16 @@ class ProjectorGUI:
         self.video_frame.after(1, self.video_stream)
 
     def tk_set_reference(self):
-        """sets reference
+        """Button 3: sets reference
         Get mouse coordinates then set reference to it"""
-        val = plt.ginput(1)[0]
-        x = val[0]
-        y = val[1]
+        self.video_canvas.get_tk_widget().config(cursor='cross')
+        self.cid = self.video_canvas.mpl_connect('button_press_event', self.tk_set_reference_click)
+        
+        
+    def tk_set_reference_click(self, event):
+        print(f'You clicked at coordinates: ({event.xdata}, {event.ydata})')
+        x = event.xdata
+        y = event.ydata
         
         ref_x1 = round(x)-30
         ref_x2 = round(x)+30
@@ -359,11 +371,14 @@ class ProjectorGUI:
         date_string = time.strftime('%Y-%m-%d_%H-%M-%S')
         # TODO: Save reference coordinates like matlab file
         # np.savez('./VideoAndRef/RefPupil_' + date_string, Refx1=ref_x1, Refx2=ref_x2, Refy1=ref_y1, Refy2=ref_y2)
-    
+        
+        self.video_canvas.get_tk_widget().config(cursor='')
+        self.video_canvas.mpl_disconnect(self.cid)
         self.tk_reference_button.configure(text="Unset Reference", command=self.tk_unset_reference)
+        
 
     def tk_load_reference(self):
-        """loads then sets reference from a RefPupil_ file
+        """ Button 4: loads then sets reference from a RefPupil_ file
             after, set reference button should now be unset reference
         """
         self.tk_root.withdraw()
@@ -396,25 +411,10 @@ class ProjectorGUI:
         self.tk_reference_button.configure(text="Set Reference", command=self.tk_set_reference)
         return
 
-    def tk_disable_tracking(self):
-        """disables tracking"""
-        self.pupil_param.disable_tracking()
-        self.tk_tracking_button.configure(text="Enable Tracking", command=self.tk_enable_tracking)
-        return
-
-    def tk_enable_tracking(self):
-        """enables tracking"""
-        self.pupil_param.enable_tracking()
-        self.tk_tracking_button.configure(text="Disable Tracking", command=self.tk_disable_tracking)
-        return
-
-    """zooms in"""
-    def tk_zoom_in(self):
-        return
 
 # BE triggering button
     def tk_draw_be(self):
-        """draws BE"""
+        """Button 7: draws BE"""
         self.PupilParam.set_BEFlag(True)
         self.tk_draw_be_button.configure(text='Hide BE', command=self.tk_hide_be)
 
@@ -424,7 +424,7 @@ class ProjectorGUI:
         self.tk_draw_be_button.configure(text='Draw BE',  command=self.tk_draw_be)
 
     def tk_sync_save(self):
-        """sync save"""
+        """Button 9: sync save"""
         if (self.PupilParam.get_video()):
             self.tk_sync_wait()
             return
@@ -450,7 +450,7 @@ class ProjectorGUI:
         return
 
     def tk_save_video(self):
-        """save video"""
+        """Button 5: save video"""
         if self.PupilParam.get_video() and not self.PupilParam.get_saving_video():
             self.PupilParam.set_saving_video(True)
             self.PupilParam.set_FrameCount(1)
@@ -482,8 +482,6 @@ class ProjectorGUI:
                     np.save(f"./VideoAndRef/{Prefix}DataPupil_{date_string}.npy", PupilData)
                     self.PupilParam.set_PTData([])
 
-
-
     def tk_secs(self):
         """ with new value entry the savable frames/freq changes"""
         secs = self.tk_secs_entry.get()
@@ -501,7 +499,7 @@ class ProjectorGUI:
         return
 
     def tk_save_pupil_tracking(self):
-        """ values collected nothing functally needed """
+        """ Button 8: values collected nothing functally needed """
         if self.PupilParam.get_video() and not self.PupilParam.get_PTFlag():
             self.PupilParam.set_PTFlag(True)
             self.PupilParam.set_PTTO(datetime.datetime.now())
@@ -530,10 +528,11 @@ class ProjectorGUI:
         return
 
     def tk_type_pupil_file_name_prefix(self):
-        """ """
-        return
+        ROOT = tk.Tk()
+        ROOT.withdraw()
+        self.prefix = simpledialog.askstring(title="Test",
+                                            prompt="Enter Prefix:")
 
-    """"""
     def get_type_pupil_file_name_prefix(self):
         return self.type_pupil_file_name_prefix
 
@@ -546,14 +545,30 @@ class ProjectorGUI:
         self.tk_automatic_button.configure(text="Manual", command=self.tk_manual)
 
     def tk_manual(self):
-        """ makes controls of video settings manual """
+        """Button 10: makes controls of video settings manual """
         self.CameraSettings.manual_exposure_mode()
         if self.video_on:
             self.set_camera_values()
         self.tk_automatic_button.configure(text="Auto", command=self.tk_auto)
         
+
+    def tk_save_settings(self):
+        """Button 11: hmmm"""
+        global CameraSetting
+        CS = CameraSetting
+        np.save('CS.npy', CS)
+        return
+
+    def tk_load_settings(self):
+        """Button 12: loads from past file of camera settings"""
+        try:
+            self.CameraSettings = np.load('CS.npy', allow_pickle=True).item()
+            print("Settings loaded successfully.")
+        except FileNotFoundError:
+            print("No settings file found.")
+
     def tk_reset(self):
-        """ resets camera values to starting values"""
+        """Button 13: resets camera values to starting values"""
         self.CameraSettings.reset_brightness()
         self.CameraSettings.reset_iris()
         self.CameraSettings.reset_exposure()
@@ -562,34 +577,83 @@ class ProjectorGUI:
         # TODO: make it so it will work when video is running
         return
 
-    def tk_save_settings(self):
-        """ """
-        global CameraSetting
-        CS = CameraSetting
-        np.save('CS.npy', CS)
-        return
-
-    def tk_load_settings(self):
-        """ """
-        return
-
     def tk_enable_tca_correction(self):
-        """ """
+        """Button 14: """
         original_color = [0.941176, 0.941176, 0.941176]
         self.PupilParam.enable_TCA_comp()
+        self.PupilParam.totaloffx = []
+        self.PupilParam.totaloffy = []
+        
+        # Update button properties to indicate TCA correction is enabled
+        self.tk_focus_button.configure(text="Disable TCA Correction",
+                                       command=self.tk_disable_tca_correction)
+        
+        """Button 14: """
+    
+        self.PupilParam.enable_TCA_comp()
         self.PupilParam.totaloffx
+        
 
-        self.tk_focus_button.configure(text="Disable TCA Correction", command=self.tk_disable_tca_correction)
-        return
+
 
     def tk_disable_tca_correction(self):
-        """ """
+        """Button 14: """
         original_color = [0.941176, 0.941176, 0.941176]
         self.PupilParam.disable_TCA_comp()
-        # PupilParam.totaloffx = []
-        # PupilParam.totaloffy = []
-        self.tk_focus_button.configure(text="Enable TCA Correction", command=self.tk_enable_tca_correction)
+         
+        if self.SYSPARAMS.realsystem == 1:
+            # Equivalent Python code for the MATLAB aligncommand logic
+            aligncommand = 'UpdateOffset#'
+            
+            for i in range(3): # 3 pos 
+                x_offset = self.StimParams.aomoffs[i][0]
+                y_offset = self.StimParams.aomoffs[i][1]
+                aligncommand += f"{x_offset}#{y_offset}#"
+            # Check board type and send the command
+            if self.SYSPARAMS.board == 'm':
+                """TODO: Call to MATLABAomControl32 goes here; however, the exact Python equivalent is unknown""" 
+            else:
+                """ TODO: Call to netcomm goes here; the exact Python equivalent is unknown"""
+                pass
 
+        self.PupilParam.EnableTCAComp = False
+
+        # Reset button to original properties
+        self.tk_focus_button.configure(text="Enable TCA Correction",
+                                       command=self.tk_enable_tca_correction)
+        
+
+    def tk_disable_tracking(self):
+        """ Button 15 disables tracking"""
+        self.pupil_param.disable_tracking()
+        self.tk_tracking_button.configure(text="Enable Tracking", command=self.tk_enable_tracking)
+        return
+
+    def tk_enable_tracking(self):
+        """Button 15 enables tracking"""
+        self.pupil_param.enable_tracking()
+        self.tk_tracking_button.configure(text="Disable Tracking", command=self.tk_disable_tracking)
+        return
+    
+    
+    """zooms in"""
+    def tk_zoom_in(self):
+        """Button 16: zooms in"""
+        return
+    
+    def tk_show_focus(self):
+        """Button 21: shows focus """
+        self.PupilParam.show_focus()
+        self.tk_focus_button.configure(text="Hide Focus", command=self.tk_hide_focus)
+        return
+    
+    def tk_hide_focus(self):
+        """Button 21: hides focus """
+        self.PupilParam.hide_focus()
+        self.tk_focus_button.configure(text="Show Focus", command=self.tk_show_focus)
+        return
+       
+       
 
     def tk_tollernc_mm(self, val):
         """"""
@@ -597,44 +661,28 @@ class ProjectorGUI:
         
         return
 
-    def tk_TCA_XY_arcmin_mm(self):
-        """
-        global PupilParam
-        load CalibrationSetting
-        Str=get(hObject,'String'); idx=strfind(Str,'/');
-        if length(idx)==1
-            CalibrationSetting(2)=str2num(Str(1:idx-1));
-            CalibrationSetting(3)=str2num(Str((idx+1):end));
-            save CalibrationSetting CalibrationSetting
-            PupilParam.TCAmmX=CalibrationSetting(2);
-            PupilParam.TCAmmY=CalibrationSetting(3);
-        end"""
-        return
-
-    def tk_show_focus(self):
-        """ shows focus """
-        self.PupilParam.show_focus()
-        self.tk_focus_button.configure(text="Hide Focus", command=self.tk_hide_focus)
-        return
+    def tk_TCA_XY_arcmin_mm(self, Str):
+        idx = Str.find('/')
+        if idx != -1:
+            self.CalibrationSetting.set_TCAmmX(float(Str[:idx]))
+            self.CalibrationSetting.set_TCAmmY(float(Str[idx+1:]))
+            print("TCAmmX and TCAmmY updated.")
+        else:
+            print("Invalid input string.")
 
 
-    def tk_hide_focus(self):
-        """ hides focus """
-        self.PupilParam.hide_focus()
-        self.tk_focus_button.configure(text="Show Focus", command=self.tk_show_focus)
-        return
 
     ######## sliders ###########
 
     def tk_brightness_change(self, val):
-        """brightness slider moved"""
+        """Slider 3: brightness slider moved"""
         self.CameraSettings.set_brightness(val)
         if self.video_on:
             self.camera.set(cv2.CAP_PROP_BRIGHTNESS, val)
         return
 
     def tk_gamma_change(self, val):
-        """slider moved"""
+        """Slider 4: slider moved"""
         self.CameraSettings.set_gamma(val)
         if  self.video_on:
             self.camera.set(cv2.CAP_PROP_GAMMA, val)
@@ -642,7 +690,7 @@ class ProjectorGUI:
         return
 
     def tk_exposure_change(self, val):
-        """slider moved"""
+        """Slider 5: slider moved"""
         self.CameraSettings.set_exposure(val)
         if self.video_on:
             self.camera.set(cv2.CAP_PROP_EXPOSURE, val)
@@ -650,7 +698,7 @@ class ProjectorGUI:
         return
 
     def tk_gain_change(self, val):
-        """slider moved"""
+        """Slider 6: slider moved"""
         self.CameraSettings.set_gain(val)
         if self.video_on:
             self.camera.set(cv2.CAP_PROP_GAIN, val)
