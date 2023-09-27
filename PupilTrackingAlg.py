@@ -359,52 +359,125 @@ def handle_focus_measure(PupilParam, event, frame_size):
     
     return focus_measure_msg 
 
-""" Finding the elipse in the pupil"""
-def track_pupil_extquarter_reflection(A, Graphic):
-    Error = 0
-    x1, x2, y1, y2 = -1, -1, -1, -1
-    Vt = np.round((A[:,:,0] + A[:,:,1] + A[:,:,2])/3)
-    if Graphic == 1:
+# """ Finding the elipse in the pupil"""
+# def track_pupil_extquarter_reflection(A, Graphic):
+#     Error = 0
+#     x1, x2, y1, y2 = -1, -1, -1, -1
+#     Vt = np.round((A[:,:,0] + A[:,:,1] + A[:,:,2])/3)
+#     if Graphic == 1:
+#         plt.figure(30)
+#         plt.imshow(Vt, cmap='gray')
+#         plt.axis('image')
+    
+#     TH_255 = 10
+#     S = Vt.shape
+#     idx255_v = np.where(np.sum(Vt.T == 255, axis=0) > TH_255)
+#     if len(idx255_v) == 0:
+#         Error = -1
+#         return x1, x2, y1, y2, Error
+
+# ### Work here
+#     idx255_h = np.where(np.sum(Vt == 255, axis=0) > TH_255)
+#     idx255_h = np.mean(idx255_h)
+#     h0 = round(max(1, idx255_h-50))
+#     h1 = round(min(idx255_h+50, S[1]))
+
+#     ver = np.sum(Vt[:,h0:h1].T == 255, axis=0)
+#     if np.sum(ver) == 0:
+#         Error = -2
+#         return x1, x2, y1, y2, Error
+
+#     R0 = 10
+#     R1 = 30
+#     for v in idx255_v[0]:
+#         if v > (R1+1) and v < (S[0]-R1):
+#             v0 = np.mean(ver[v-R0+1:v+R0-1])
+#             vl = np.mean(ver[v-R1:v-R0])
+#             vr = np.mean(ver[v+R0:v+R1])
+#             if v0 > vl and v0 > vr:
+#                 break
+
+#     h = np.where(Vt[v,:] == 255)[0]
+#     R = 30
+#     x1 = h[0]
+#     x2 = h[-1]
+#     y1 = v-R
+#     y2 = v+R
+#     xc = x1*0.5 + x2*0.5
+#     x1 = xc-R
+#     x2 = xc+R
+    
+#     """TODO: learn how to display graphic on cur frame"""
+#     return x1, x2, y1, y2, Error
+
+
+def track_pupil_extquarter_reflection(image, is_graph):
+    """Finding the coordinates of 2 elipse reflections in the pupil.
+
+    Args:
+        image (_type_): Input image to find reflection on.
+        is_graph (bool): True if we want to display the image while the process is running.
+
+    Returns:
+        Tuple: (x1, x2, y1, y2, error) where x1, y1 represents center of first elipse and vice versa.
+        (error = -1 if no verticle reflection is found, -2 if no horizontal reflection is found and 0 if no errors)
+    """
+    assert len(image.shape) == 3 and image.shape[2] >= 3, "Image has wrong dimensions! It has to be in"
+    if len(image.shape) == 3 and image.shape[2] >= 3:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        
+    if is_graph:
         plt.figure(30)
-        plt.imshow(Vt, cmap='gray')
+        plt.imshow(image, cmap='gray')
         plt.axis('image')
     
-    TH_255 = 10
-    S = Vt.shape
-    idx255_v = np.where(np.sum(Vt.T == 255, axis=0) > TH_255)
-    if len(idx255_v[0]) == 0:
-        Error = -1
-        return x1, x2, y1, y2, Error
-
-    idx255_h = np.where(np.sum(Vt == 255, axis=0) > TH_255)
-    idx255_h = np.mean(idx255_h)
-    h0 = round(max(1, idx255_h-50))
-    h1 = round(min(idx255_h+50, S[1]))
-
-    ver = np.sum(Vt[:,h0:h1].T == 255, axis=0)
-    if np.sum(ver) == 0:
-        Error = -2
-        return x1, x2, y1, y2, Error
-
-    R0 = 10
-    R1 = 30
-    for v in idx255_v[0]:
-        if v > (R1+1) and v < (S[0]-R1):
-            v0 = np.mean(ver[v-R0+1:v+R0-1])
-            vl = np.mean(ver[v-R1:v-R0])
-            vr = np.mean(ver[v+R0:v+R1])
-            if v0 > vl and v0 > vr:
-                break
-
-    h = np.where(Vt[v,:] == 255)[0]
+    occurence_over255_threshold = 10
+    x1=-1; x2=-1; y1=-1; y2=-1;
+    search_range = 50 # How much we are searching around center of white pixels
+    
+    # Check for verticle reflections
+    verticle_reflections_coords = np.where(np.sum(image == 255, axis=0) > occurence_over255_threshold)
+    if len(verticle_reflections_coords) == 0:
+        return x1, x2, y1, y2, -1
+    center_y = np.mean(verticle_reflections_coords)
+    
+    # Check for horizontal reflections
+    horizontal_reflections_coords = np.where(np.sum(image == 255, axis=1) > occurence_over255_threshold)
+    if len(horizontal_reflections_coords) == 0:
+        return x1, x2, y1, y2, -2
+    center_x = np.mean(horizontal_reflections_coords)
+    
+    search_start = round(max(0, center_x - search_range))
+    search_end = round(min(center_x + search_range, image.shape[1]))
+    
+    summed_verticle_reflections_row = np.sum(image[:, search_start:search_end].T == 255, axis=1)
+    
+    r0, r1 = 10, 30
+    
+    for verticle_index in verticle_reflections_coords:
+        if not (verticle_index > (r1 + 1) and verticle_index < (image.shape[0] - r1)):
+            continue
+        
+        # Compute the means v0, vl, and vr
+        v0 = np.mean(summed_verticle_reflections_row[verticle_index - r0 + 1 : verticle_index + r0])
+        vl = np.mean(summed_verticle_reflections_row[verticle_index - r1 : verticle_index - r0])
+        vr = np.mean(summed_verticle_reflections_row[verticle_index + r0 : verticle_index + r1 + 1])  # Include the stop index in Python
+        
+        # Check if v0 is greater than both vl and vr
+        if v0 > vl and v0 > vr:
+            break  # Exit the loop if the condition is met
+        
+        
+    h = np.where(image[verticle_index,:] == 255)[0]
+    print(verticle_index)
     R = 30
     x1 = h[0]
     x2 = h[-1]
-    y1 = v-R
-    y2 = v+R
+    y1 = verticle_index-R
+    y2 = verticle_index+R
     xc = x1*0.5 + x2*0.5
     x1 = xc-R
     x2 = xc+R
     
     """TODO: learn how to display graphic on cur frame"""
-    return x1, x2, y1, y2, Error
+    return x1, x2, y1, y2, 0
