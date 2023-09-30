@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import matplotlib.patches as patches
 
 # Implement the default Matplotlib key bindings.
 from PIL import ImageTk
@@ -357,11 +358,11 @@ class ProjectorGUI:
         """
         self.ax.clear() #clear for less storage
         
-        self.ax.plot([self.PupilParam.x1, self.PupilParam.x1], [self.PupilParam.y1, self.PupilParam.y2], linewidth=2, color=[0.75, 0, 0])
-        self.ax.plot([self.PupilParam.x2, self.PupilParam.x2], [self.PupilParam.y1, self.PupilParam.y2], linewidth=2, color=[0.75, 0, 0])
-        self.ax.plot([self.PupilParam.x1, self.PupilParam.x2], [self.PupilParam.y1, self.PupilParam.y1], linewidth=2, color=[0.75, 0, 0])
-        self.ax.plot([self.PupilParam.x1, self.PupilParam.x2], [self.PupilParam.y2, self.PupilParam.y2], linewidth=2, color=[0.75, 0, 0])
-
+        if (self.PupilParam.x1 != -1):
+            print("hi")
+        rect1 = patches.Rectangle((self.PupilParam.x1, self.PupilParam.y1), 40, 30, linewidth=1, edgecolor='r')
+        rect2 = patches.Rectangle((self.PupilParam.x2, self.PupilParam.y2), 40, 30, linewidth=1, edgecolor='r')
+        
         self.ax.imshow(frame_rgb, aspect='auto')
         self.video_canvas.draw()
         self.video_canvas.get_tk_widget().pack()
