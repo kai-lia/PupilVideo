@@ -425,59 +425,33 @@ def track_pupil_extquarter_reflection(image, is_graph):
     assert len(image.shape) == 3 and image.shape[2] >= 3, "Image has wrong dimensions! It has to be in"
     if len(image.shape) == 3 and image.shape[2] >= 3:
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        
     if is_graph:
         plt.figure(30)
         plt.imshow(image, cmap='gray')
         plt.axis('image')
     
-    occurence_over255_threshold = 10
-    x1=-1; x2=-1; y1=-1; y2=-1;
-    search_range = 50 # How much we are searching around center of white pixels
+
+    white_pixel_threshold = 200
+    _, binarized_image = cv2.threshold(image, white_pixel_threshold, 255, cv2.THRESH_BINARY)
     
-    # Check for verticle reflections
-    verticle_reflections_coords = np.where(np.sum(image == 255, axis=0) > occurence_over255_threshold)
-    if len(verticle_reflections_coords) == 0:
+    # Apply connected component analysis
+    num_white_pixel_groups, white_pixel_groups_labels, white_pixel_group_info, white_pixel_group_center_coords = cv2.connectedComponentsWithStats(binarized_image, connectivity=8)
+    
+    center_points = []
+    # Iterate through each component (excluding the background label 0)
+    for label in range(1, num_white_pixel_groups):
+        center_x = int(white_pixel_group_center_coords[label][0])
+        center_y = int(white_pixel_group_center_coords[label][1])
+    
+        center_points.append((center_x, center_y))
+    
+    if len(center_points) == 0:
+        return 0, 0 , 0, 0, -1
+    
+    x1, y1 = center_points[0]
+    x2, y2 = center_points[1]
+    
+    if len(center_points) > 2:
         return x1, x2, y1, y2, -1
-    center_y = np.mean(verticle_reflections_coords)
     
-    # Check for horizontal reflections
-    horizontal_reflections_coords = np.where(np.sum(image == 255, axis=1) > occurence_over255_threshold)
-    if len(horizontal_reflections_coords) == 0:
-        return x1, x2, y1, y2, -2
-    center_x = np.mean(horizontal_reflections_coords)
-    
-    search_start = round(max(0, center_x - search_range))
-    search_end = round(min(center_x + search_range, image.shape[1]))
-    
-    summed_verticle_reflections_row = np.sum(image[:, search_start:search_end].T == 255, axis=1)
-    
-    r0, r1 = 10, 30
-    
-    for verticle_index in verticle_reflections_coords:
-        if not (verticle_index > (r1 + 1) and verticle_index < (image.shape[0] - r1)):
-            continue
-        
-        # Compute the means v0, vl, and vr
-        v0 = np.mean(summed_verticle_reflections_row[verticle_index - r0 + 1 : verticle_index + r0])
-        vl = np.mean(summed_verticle_reflections_row[verticle_index - r1 : verticle_index - r0])
-        vr = np.mean(summed_verticle_reflections_row[verticle_index + r0 : verticle_index + r1 + 1])  # Include the stop index in Python
-        
-        # Check if v0 is greater than both vl and vr
-        if v0 > vl and v0 > vr:
-            break  # Exit the loop if the condition is met
-        
-        
-    h = np.where(image[verticle_index,:] == 255)[0]
-    print(verticle_index)
-    R = 30
-    x1 = h[0]
-    x2 = h[-1]
-    y1 = verticle_index-R
-    y2 = verticle_index+R
-    xc = x1*0.5 + x2*0.5
-    x1 = xc-R
-    x2 = xc+R
-    
-    """TODO: learn how to display graphic on cur frame"""
     return x1, x2, y1, y2, 0
