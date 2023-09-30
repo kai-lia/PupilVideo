@@ -94,7 +94,6 @@ def display_tracking_data(PupilParam):
         PupilParam.p1.set_xdata(rx)
         PupilParam.p1.set_ydata(ry)
         PupilParam.p1.set_linewidth(2)
-        PupilParam.p1.set_color(col1)
     else:
         PupilParam.p1.set_xdata([1])
         PupilParam.p1.set_ydata([1])
@@ -359,58 +358,6 @@ def handle_focus_measure(PupilParam, event, frame_size):
     
     return focus_measure_msg 
 
-# """ Finding the elipse in the pupil"""
-# def track_pupil_extquarter_reflection(A, Graphic):
-#     Error = 0
-#     x1, x2, y1, y2 = -1, -1, -1, -1
-#     Vt = np.round((A[:,:,0] + A[:,:,1] + A[:,:,2])/3)
-#     if Graphic == 1:
-#         plt.figure(30)
-#         plt.imshow(Vt, cmap='gray')
-#         plt.axis('image')
-    
-#     TH_255 = 10
-#     S = Vt.shape
-#     idx255_v = np.where(np.sum(Vt.T == 255, axis=0) > TH_255)
-#     if len(idx255_v) == 0:
-#         Error = -1
-#         return x1, x2, y1, y2, Error
-
-# ### Work here
-#     idx255_h = np.where(np.sum(Vt == 255, axis=0) > TH_255)
-#     idx255_h = np.mean(idx255_h)
-#     h0 = round(max(1, idx255_h-50))
-#     h1 = round(min(idx255_h+50, S[1]))
-
-#     ver = np.sum(Vt[:,h0:h1].T == 255, axis=0)
-#     if np.sum(ver) == 0:
-#         Error = -2
-#         return x1, x2, y1, y2, Error
-
-#     R0 = 10
-#     R1 = 30
-#     for v in idx255_v[0]:
-#         if v > (R1+1) and v < (S[0]-R1):
-#             v0 = np.mean(ver[v-R0+1:v+R0-1])
-#             vl = np.mean(ver[v-R1:v-R0])
-#             vr = np.mean(ver[v+R0:v+R1])
-#             if v0 > vl and v0 > vr:
-#                 break
-
-#     h = np.where(Vt[v,:] == 255)[0]
-#     R = 30
-#     x1 = h[0]
-#     x2 = h[-1]
-#     y1 = v-R
-#     y2 = v+R
-#     xc = x1*0.5 + x2*0.5
-#     x1 = xc-R
-#     x2 = xc+R
-    
-#     """TODO: learn how to display graphic on cur frame"""
-#     return x1, x2, y1, y2, Error
-
-
 def track_pupil_extquarter_reflection(image, is_graph):
     """Finding the coordinates of 2 elipse reflections in the pupil.
 
@@ -420,7 +367,7 @@ def track_pupil_extquarter_reflection(image, is_graph):
 
     Returns:
         Tuple: (x1, x2, y1, y2, error) where x1, y1 represents center of first elipse and vice versa.
-        (error = -1 if no verticle reflection is found, -2 if no horizontal reflection is found and 0 if no errors)
+        (error = -1 if there are no white pixel group found, and 0 if no errors)
     """
     assert len(image.shape) == 3 and image.shape[2] >= 3, "Image has wrong dimensions! It has to be in"
     if len(image.shape) == 3 and image.shape[2] >= 3:
@@ -431,27 +378,23 @@ def track_pupil_extquarter_reflection(image, is_graph):
         plt.axis('image')
     
 
-    white_pixel_threshold = 200
+    white_pixel_threshold = 254
     _, binarized_image = cv2.threshold(image, white_pixel_threshold, 255, cv2.THRESH_BINARY)
     
     # Apply connected component analysis
     num_white_pixel_groups, white_pixel_groups_labels, white_pixel_group_info, white_pixel_group_center_coords = cv2.connectedComponentsWithStats(binarized_image, connectivity=8)
     
-    center_points = []
-    # Iterate through each component (excluding the background label 0)
-    for label in range(1, num_white_pixel_groups):
-        center_x = int(white_pixel_group_center_coords[label][0])
-        center_y = int(white_pixel_group_center_coords[label][1])
+    if num_white_pixel_groups > 1:
+        # Find the largest connected component (excluding the background)
+        largest_label = np.argmax(white_pixel_group_info[1:, cv2.CC_STAT_AREA]) + 1
+        
+        # Get the bounding box coordinates of the largest connected component
+        x, y, w, h = white_pixel_group_info[largest_label, cv2.CC_STAT_LEFT], white_pixel_group_info[largest_label, cv2.CC_STAT_TOP], \
+                    white_pixel_group_info[largest_label, cv2.CC_STAT_WIDTH], white_pixel_group_info[largest_label, cv2.CC_STAT_HEIGHT]
+        
+        return x, x + w, y, y - h, 0
     
-        center_points.append((center_x, center_y))
+    return 0, 0, 0, 0, -1
     
-    if len(center_points) == 0:
-        return 0, 0 , 0, 0, -1
     
-    x1, y1 = center_points[0]
-    x2, y2 = center_points[1]
     
-    if len(center_points) > 2:
-        return x1, x2, y1, y2, -1
-    
-    return x1, x2, y1, y2, 0

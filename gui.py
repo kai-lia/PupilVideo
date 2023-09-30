@@ -1,52 +1,36 @@
-import cv2
-import numpy as np
-import matplotlib.patches as patches
-
-# Implement the default Matplotlib key bindings.
-from PIL import ImageTk
-
-import tkinter as tk
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.figure import Figure
-import numpy as np
-
-import tkinter as tk
-from PIL import ImageTk, Image
-from matplotlib.widgets import Slider
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.backend_bases import key_press_handler
-from matplotlib.figure import Figure
-import tkinter as tk
-import matplotlib.pyplot as plt
-from tkinter import *
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,
-NavigationToolbar2Tk)
-from data_structures import CameraSettings
-from data_structures import CalibrationSettings
 import os
-from PupilTrackingAlg import PupilTrackingAlg
-from tkinter import simpledialog
+import cv2
 import sys
 import datetime
-import matplotlib.pyplot as plt; plt.rcdefaults()
 import numpy as np
-from matplotlib.widgets import Slider
-from PupilParam import *
-from SYSPARAMS import *
-import datetime
-from datetime import datetime
-
+import tkinter as tk
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
 import tkinter.filedialog
 import tkinter.messagebox
 import traceback
-import json
 import scipy.io as sio
-from pathlib import Path
-import io
 
-import base64
+# Implement the default Matplotlib key bindings.
+from PIL import ImageTk, Image
+
+from tkinter import *
+
+from matplotlib.figure import Figure
+import matplotlib.patches as patches
+from matplotlib.widgets import Slider
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+from matplotlib.backend_bases import key_press_handler
+
+from data_structures import CameraSettings, CalibrationSettings
+
+from datetime import datetime
+from PupilParam import *
+from SYSPARAMS import *
+from PupilTrackingAlg import PupilTrackingAlg
+
+# Reset 
+plt.rcdefaults()
 
 """  displaying error messages in GUI"""
 def exception_troubleshoot(func):
@@ -360,9 +344,10 @@ class ProjectorGUI:
         
         if (self.PupilParam.x1 != -1):
             print("hi")
-        rect1 = patches.Rectangle((self.PupilParam.x1, self.PupilParam.y1), 40, 30, linewidth=1, edgecolor='r')
-        rect2 = patches.Rectangle((self.PupilParam.x2, self.PupilParam.y2), 40, 30, linewidth=1, edgecolor='r')
-        
+        width = self.PupilParam.x2 - self.PupilParam.x1
+        height = self.PupilParam.y2 - self.PupilParam.y1
+        rect = patches.Rectangle((self.PupilParam.x1, self.PupilParam.y1), width, height, linewidth=1, edgecolor='r', fill=False)
+        self.ax.add_patch(rect)
         self.ax.imshow(frame_rgb, aspect='auto')
         self.video_canvas.draw()
         self.video_canvas.get_tk_widget().pack()
