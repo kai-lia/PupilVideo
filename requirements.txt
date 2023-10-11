@@ -6,4 +6,5 @@ pillow
 scikit-image
 scipy
 matplotlib
-matlab.engine
+matlab
+opencv-python

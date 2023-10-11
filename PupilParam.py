@@ -3,10 +3,23 @@ import matplotlib.pyplot as plt
 
 class PupilParam:
     def __init__(self):
+        self.frame_width = -1
+        self.frame_height = -1
         self.x1 = -1
         self.x2 = -1
         self.y1 = -1
         self.y2 = -1
+        
+        self.center_x = -1
+        self.center_y = -1
+        
+        self.ref_x1 = -1
+        self.ref_x2 = -1
+        self.ref_y1 = -1
+        self.ref_y2 = -1
+        
+        self.ref_center_x = -1
+        self.ref_center_y = -1
 
         self.track_error = -1
         self.totaloffx = []
@@ -49,14 +62,14 @@ class PupilParam:
         self.tolerated_pupil_dist = None
 
         # l plots: doing (None,)*int to multi declare without dependencies
+        # l3 show ref ==1, line
+        # l4 if track error > -1, line
         self.l3, self.l4, self.l5, self.l6, self.l7, self.l8 = (None,)*6
-        # p plot
+        # p plot if trackError > -1 also error line?
         self.p1 = None
-        # v plots
-        self.v1, self.v2, self.v3, self.v4 = (None,)*4
-        # c plots
+         # c plots
         self.c1, self.c2, self.c3, self.c4, self.c5 = (None,)*5
-        # r plots
+        # r plots if BEFlag, square
         self.r1, self.r2, self.r3, self.r4 = (None,)*4
 
 # x1, x2, y1, y2 Features for tracking
@@ -71,6 +84,20 @@ class PupilParam:
         
     def reset_y2(self):
         self.y2 = -1
+        
+# x1, x2, y1, y2 Features for tracking reference
+    def reset_ref_x1(self):
+        self.ref_x1 = -1
+
+    def reset_ref_x2(self):
+        self.ref_x2 = -1
+        
+    def reset_ref_y1(self):
+        self.ref_y1 = -1
+        
+    def reset_ref_y2(self):
+        self.ref_y2 = -1
+        
 
 # trackerror
     def reset_track_error(self):
@@ -120,7 +147,7 @@ class PupilParam:
         used when opening new video instance or zooming in
         resets vector so tracking accuracy preserved """
     def reset_vectors(self):
-        plot_obj = plt.plot([1], [1])[0]
+        plot_obj = [1, 1]
         # l value
         self.l3 = plot_obj
         self.l4 = plot_obj
@@ -130,10 +157,6 @@ class PupilParam:
         self.l8 = plot_obj
         # p value
         self.p1 = plot_obj
-        # v values
-        self.v1 = plot_obj
-        self.v2 = plot_obj
-        self.v3 = plot_obj
         # c values
         self.c1 = plot_obj
         self.c2 = plot_obj

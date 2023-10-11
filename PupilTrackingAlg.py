@@ -1,23 +1,19 @@
 import numpy as np
-from scipy.signal import convolve2d
 from matplotlib import pyplot as plt
 import cv2
 import datetime
 from datetime import datetime
 import time
 
-def PupilTrackingAlg(frame, PupilParam, SYSPARAMS, display):
+def PupilTrackingAlg(frame, PupilParam, SYSPARAMS, display, ax):
     DEPTH_OF_BUFFER = 5
     # frame properties 
     frame_size = frame.shape[:2]
-    ycBE = frame_size[0]
-    xcBE = frame_size[1]
-    half_kernel = frame_size[0] / 2
-    
+    PupilParam.frame_width = frame_size[1]
+    PupilParam.frame_height  = frame_size[0]
     # redundant? RBE = calculate_RBE(half_kernel, PupilParam.pixel_calibration) # sets RBE based on half kernel
         
     """" TODO: hps=get(get(get(himage,'Parent'),'Parent'),'Children'); """
-    col1 = [1, 0.5, 0] # were hardcoded in original
     if PupilParam.tracking:
         # Runs tracking function
         PupilParam.x1, PupilParam.x2, PupilParam.y1, PupilParam.y2, PupilParam.track_error = track_pupil_extquarter_reflection(frame, 0) 
@@ -25,8 +21,8 @@ def PupilTrackingAlg(frame, PupilParam, SYSPARAMS, display):
         PupilParam.x1, PupilParam.x2, PupilParam.y1, PupilParam.y2 = [-1, -1, -1, -1]
         PupilParam.track_error = -10
     # Calculate average pupil coordinates
-    x0 = np.mean([PupilParam.x1, PupilParam.x2]) # if tracking is not engaged it will be -1
-    y0 = np.mean([PupilParam.y1, PupilParam.y2])
+    PupilParam.center_x = np.mean([PupilParam.x1, PupilParam.x2]) # if tracking is not engaged it will be -1
+    PupilParam.center_y = np.mean([PupilParam.y1, PupilParam.y2])
 
     # Initialize recording details
     current_time = datetime.now()
@@ -43,15 +39,15 @@ def PupilTrackingAlg(frame, PupilParam, SYSPARAMS, display):
         
     """ TODO: line 81-93 no idea what the purpose of this code is probabbly irrelavent ****
 if PupilParam.Sync==1 & etime(clock,[2000 1 1 0 0 0]) - SYSPARAMS.pupil_duration < 0 cmp"""
-    display_tracking_data(PupilParam)
+    #display_tracking_data(PupilParam, ax)
     # Handle FPS counting
     current_fps = handle_fps_counting(PupilParam, block_fps)
     SYSPARAMS.PupilCamerafps = current_fps
     # Handle boundary error visualization
-    handle_boundary_error(PupilParam, frame_size, xcBE, ycBE)
+    handle_boundary_error(PupilParam, frame_size)
     # Handle TCA computation and visualization
     StimParams = 0
-    handle_TCA_computation(PupilParam, StimParams, SYSPARAMS, x0, y0, xcBE, ycBE)
+    handle_TCA_computation(PupilParam, StimParams, SYSPARAMS)
     # Handle video saving mechanism
     handle_video_saving(PupilParam)
 
@@ -59,7 +55,7 @@ if PupilParam.Sync==1 & etime(clock,[2000 1 1 0 0 0]) - SYSPARAMS.pupil_duration
     if PupilParam.Ltotaloffx >= (DEPTH_OF_BUFFER - 1): #filter through buffer 5 times
         PupilParam.Ltotaloffx = 0
     
-    handle_TCA_computation(PupilParam, StimParams, SYSPARAMS, x0, y0, xcBE, ycBE)
+    handle_TCA_computation(PupilParam, StimParams, SYSPARAMS)
 
     handle_video_saving(PupilParam)
     
@@ -68,12 +64,12 @@ if PupilParam.Sync==1 & etime(clock,[2000 1 1 0 0 0]) - SYSPARAMS.pupil_duration
     PupilParam.idx_reftime += 1 # increments each run
 
 
-def calculate_RBE(half_kernel, pixel_calibration):
-    """  Calcs RBE 
-        Note: RBE: Region of Pupil Boundary Error 
-        The values of RBE determine the size of the region used for pupil tracking,
-        and they are calculated based on the pixel calibration.
-    """
+"""def calculate_RBE(half_kernel, pixel_calibration):
+     # Calcs RBE 
+        #Note: RBE: Region of Pupil Boundary Error 
+       # The values of RBE determine the size of the region used for pupil tracking,
+       # and they are calculated based on the pixel calibration.
+    
     RBE = [5 * pixel_calibration, 10 * pixel_calibration, 15 * pixel_calibration]
     if RBE[2] > half_kernel:
         RBE[2] = 0
@@ -81,40 +77,33 @@ def calculate_RBE(half_kernel, pixel_calibration):
         RBE[1] = 0
     if RBE[0] > half_kernel:
         RBE[0] = 0
-    return RBE
+    return RBE"""
 
-def display_tracking_data(PupilParam):
-    """
-    Display tracking data on the UI or console
-    """
-    if PupilParam.track_error > -1: # TODO: check running value
-        rx = [PupilParam.x1, PupilParam.x2, PupilParam.x2, PupilParam.x1, PupilParam.x1]
-        ry = [PupilParam.y1, PupilParam.y1, PupilParam.y2, PupilParam.y2, PupilParam.y1]
+"""def display_tracking_data(PupilParam, ax):
+    print("display_tracking_data")
 
-        PupilParam.p1.set_xdata(rx)
-        PupilParam.p1.set_ydata(ry)
-        PupilParam.p1.set_linewidth(2)
+    #Display tracking data on the UI or console
+
+    if PupilParam.track_error > -1:
+        rx = [PupilParam.x1, PupilParam.x2]
+        ry = [PupilParam.y1, PupilParam.y2]
+
+        PupilParam.p1 = [rx, ry]
     else:
-        PupilParam.p1.set_xdata([1])
-        PupilParam.p1.set_ydata([1])
+        PupilParam.p1 = [1, 1]
 
-    if PupilParam.show_reference == 1:
-        c = [0.75, 0, 0]
-        rx0Ref = (PupilParam.Refx2 + PupilParam.Refx1) / 2
-        ry0Ref = (PupilParam.Refy2 + PupilParam.Refy1) / 2
-        rx = [PupilParam.Refx1, PupilParam.Refx2, PupilParam.Refx2, PupilParam.Refx1, PupilParam.Refx1]
-        ry = [PupilParam.Refy1, PupilParam.Refy1, PupilParam.Refy2, PupilParam.Refy2, PupilParam.Refy1]
-
-        PupilParam.l3.set_xdata(rx)
-        PupilParam.l3.set_ydata(ry)
-        PupilParam.l3.set_color(c)
-        PupilParam.l3.set_linewidth(2)
+    if PupilParam.show_reference:
+        rx = [PupilParam.ref_x1, PupilParam.ref_x2]
+        ry = [PupilParam.ref_y1, PupilParam.ref_y2]
+        
+        PupilParam.l3 = [rx, ry]
     else:
-        PupilParam.l3.set_xdata([1])
-        PupilParam.l3.set_ydata([1])
-    
+        PupilParam.l3 = [1, 1]
+    """
+        
 
 def handle_fps_counting(PupilParam, block_fps):
+    print("handle_fps_counting")
     """ Manage FPS counting for the pupil tracking.
     Updates FPS values in a buffer and resets the reference index
     when the end of the buffer is reached. The difference between the current time
@@ -147,7 +136,8 @@ def etime(end, start):
     return diff_seconds
     
 
-def handle_boundary_error(PupilParam,frame_size, xcBE, ycBE):
+def handle_boundary_error(PupilParam,frame_size):
+    print("handle_boundary_error")
     """
     Handle boundary errors and visualize accordingly.
     """
@@ -156,60 +146,42 @@ def handle_boundary_error(PupilParam,frame_size, xcBE, ycBE):
     half_frame_width = round(frame_size[1] / 2)
     calibration_distance = PupilParam.pixel_calibration
     
-     # Check for boundary error flag
-    if PupilParam.BEFlag == 1:
-
+    # Check for boundary error flag
+    if PupilParam.BEFlag:
         # Set vertical centerline visualization
-        PupilParam.r1.set_xdata([half_frame_width] * frame_size[0])
-        PupilParam.r1.set_ydata(range(1, frame_size[0] + 1))
-        PupilParam.r1.set_linewidth(6)
-        PupilParam.r1.set_color([1, 0, 0])
-        
+        PupilParam.r1 = [[half_frame_width] * frame_size[0], range(1, frame_size[0] + 1)]
+     
         # Set additional vertical markers visualization
         vertical_markers_ydata = np.concatenate([
             np.arange(half_frame_height - calibration_distance, -calibration_distance, -calibration_distance),
             np.arange(half_frame_height + calibration_distance, frame_size[0] + calibration_distance, calibration_distance)
         ])
-        PupilParam.r2.set_xdata([half_frame_width] * len(vertical_markers_ydata))
-        PupilParam.r2.set_ydata(vertical_markers_ydata)
-        PupilParam.r2.set_linewidth(2)
-        PupilParam.r2.set_color([1, 0, 0])
+        PupilParam.r2 = [[half_frame_width] * len(vertical_markers_ydata), vertical_markers_ydata]
 
         # Set horizontal centerline visualization
-        PupilParam.r3.set_xdata(range(1, frame_size[1] + 1))
-        PupilParam.r3.set_ydata([half_frame_height] * frame_size[1])
-        PupilParam.r3.set_linewidth(6)
-        PupilParam.r3.set_color([1, 0, 0])
+        PupilParam.r3 = [range(1, frame_size[1] + 1), [half_frame_height] * frame_size[1]]
 
         # Set additional horizontal markers visualization
         horizontal_markers_xdata = np.concatenate([
             np.arange(half_frame_width - calibration_distance, -calibration_distance, -calibration_distance),
             np.arange(half_frame_width + calibration_distance, frame_size[1] + calibration_distance, calibration_distance)
         ])
-        PupilParam.r4.set_xdata(horizontal_markers_xdata)
-        PupilParam.r4.set_ydata([half_frame_height] * len(horizontal_markers_xdata))
-        PupilParam.r4.set_linewidth(2)
-        PupilParam.r4.set_color([1, 0, 0])
+        PupilParam.r4 = [horizontal_markers_xdata, [half_frame_height] * len(horizontal_markers_xdata)]
 
     # Reset the visualizations if no boundary error
     else:
         for r in [PupilParam.r1, PupilParam.r2, PupilParam.r3, PupilParam.r4]:
-            r.set_xdata([1])
-            r.set_ydata([1])
+            r = [0,0]
 
-def handle_TCA_computation(PupilParam, StimParams, SYSPARAMS, x0, y0, xcBE, ycBE):
+def handle_TCA_computation(PupilParam, StimParams, SYSPARAMS):
+    print("handle_TCA_computation")
     """
     Handle TCA computation and visualization
     """
     # TCA computation logic goes here
-    if PupilParam.track_error > -1:
-        gray_color = [0.75, 0.75, 0.75] # color defintion to gray
-        difx, dify = calculate_line_dif(PupilParam, x0, y0, xcBE, ycBE)
-            
+    if PupilParam.track_error >= -1:
         # Style the reference line
-        PupilParam.l4.set_color(gray_color)
-        PupilParam.l4.set_linewidth(2)
-            
+        difx, dify = calculate_line_dif(PupilParam)
         # Calculate the distance and TCA values
         distance = np.sqrt(difx ** 2 + dify ** 2) / PupilParam.pixel_calibration
         calculate_TCA(SYSPARAMS, PupilParam, difx, dify)
@@ -232,19 +204,17 @@ def handle_TCA_computation(PupilParam, StimParams, SYSPARAMS, x0, y0, xcBE, ycBE
         TCA_no_tracking(PupilParam, SYSPARAMS)
         
         
-def calculate_line_dif(PupilParam, x0, y0, xcBE, ycBE):
-    rx0Ref=(PupilParam.Refx2 + PupilParam.Refx1)/2;
-    ry0Ref=(PupilParam.Refy2 + PupilParam.Refy1)/2;
+def calculate_line_dif(PupilParam):
+    print("calculate_line_dif")
     if PupilParam.show_reference:
-        PupilParam.l4.set_xdata([rx0Ref, x0])
-        PupilParam.l4.set_ydata([ry0Ref, y0])
-        difx = rx0Ref - x0
-        dify = ry0Ref - y0
+        difx = PupilParam.ref_center_x - PupilParam.center_x
+        dify = PupilParam.ref_center_y  - PupilParam.center_y
     else:
-        PupilParam.l4.set_xdata([xcBE / 2, x0])
-        PupilParam.l4.set_ydata([ycBE / 2, y0])
-        difx = round(xcBE / 2 - x0)
-        dify = round(ycBE / 2 - y0)
+        print("l4 appearing")
+        PupilParam.l4 = None
+        
+        difx = round(PupilParam.frame_width / 2 - PupilParam.center_x)
+        dify = round(PupilParam.frame_height / 2 - PupilParam.center_y)
     return difx, dify
 
 def calculate_TCA(SYSPARAMS, PupilParam, difx, dify):
@@ -252,19 +222,20 @@ def calculate_TCA(SYSPARAMS, PupilParam, difx, dify):
     SYSPARAMS.pupil_TCA_y = PupilParam.TCAmmY * dify / PupilParam.pixel_calibration
     
 def TCA_compensation(PupilParam, SYSPARAMS, StimParams):
+    print("TCA_compensation")
     """
     TCA Compensation refers to methods used to correct for this aberration, 
-    ensuring that all colors in an image focus at the same point and overlap as intended.
+    ensuring that image focus at the same point and overlap as intended.
     """
-    if PupilParam.EnableTCAComp == 1:
+    if PupilParam.TCA_comp:
         # Compute the arcmn of TCA based on subject's own ratio
-        pixperarcmin = SYSPARAMS.pixel_per_deg / 60
-        xoffset = round(SYSPARAMS.pupil_TCA_x * pixperarcmin)  # in pixels
-        yoffset = round(SYSPARAMS.pupil_TCA_y * pixperarcmin)  # in pixels
+        pix_per_arcmin = SYSPARAMS.pixel_per_deg / 60
+        x_offset = round(SYSPARAMS.pupil_TCA_x * pix_per_arcmin)  # in pixels
+        y_offset = round(SYSPARAMS.pupil_TCA_y * pix_per_arcmin)  # in pixels
 
-        if (abs(xoffset) > 0 or abs(yoffset) > 0) and PupilParam.show_reference == 1:
-            PupilParam.totaloffx = StimParams.aomoffs[0, 0] + xoffset
-            PupilParam.totaloffy = StimParams.aomoffs[0, 1] - yoffset
+        if (abs(x_offset) > 0 or abs(y_offset) > 0) and PupilParam.show_reference:
+            PupilParam.totaloffx = StimParams.aomoffs[0, 0] + x_offset
+            PupilParam.totaloffy = StimParams.aomoffs[0, 1] - y_offset
 
             if SYSPARAMS.real_system == 1:
                 aligncommand = f'UpdateOffset#{PupilParam.totaloffx}#{PupilParam.totaloffy}#' \
@@ -276,6 +247,7 @@ def TCA_compensation(PupilParam, SYSPARAMS, StimParams):
                     netcomm('write', SYSPARAMS.netcommobj, int8(aligncommand))
                     
 def TCA_message(current_fps, difx, dify, pupil_TCA_x, pupil_TCA_y, pixel_calibration):
+    print("TCA_message")
     """
     Handle message display based on FPS.
     """
@@ -291,8 +263,8 @@ def TCA_message(current_fps, difx, dify, pupil_TCA_x, pupil_TCA_y, pixel_calibra
     return message
                     
 def TCA_no_tracking(PupilParam, SYSPARAMS):
-    PupilParam.l4.set_xdata([1])
-    PupilParam.l4.set_ydata([1])
+    print("TCA_no_tracking")
+    PupilParam.l4 = None
     
     # Construct tracking message
     focus_measure_msg  = f'fps={SYSPARAMS.PupilCamerafps} no tracking'
@@ -310,6 +282,7 @@ def handle_video_saving(PupilParam):
     """
     # The exact logic for this needs to be confirmed
     # This is just a skeleton of the function
+    print("handle_video_saving")
     if PupilParam.saving_video and PupilParam.FrameCount < PupilParam.MAX_NUM_OF_SAVABLE_FRAMES and \
             time.time() - PupilParam.toc > PupilParam.SAVING_FREQUENCY:
         VideoToSave.append(event.Data)
@@ -318,49 +291,42 @@ def handle_video_saving(PupilParam):
     else:
         if PupilParam.saving_video and PupilParam.FrameCount >= PupilParam.MAX_NUM_OF_SAVABLE_FRAMES:
             PupilParam.saving_video = False
-            # hps[11].set_text('Saving ...')
-            # Prefix = hps[7].get_text()
             DateString = time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime())
             np.savez(f'./VideoAndRef/{Prefix}VideoPupil_{DateString}.npz', VideoToSave)
             VideoToSave = []
-            # hps[11].set_text('Save Video')
-            # hps[11].set_backgroundcolor([0.941176, 0.941176, 0.941176])
-            # hps[11].set_foregroundcolor([0, 0, 0])
             if PupilParam.PTFlag == 1:
                 PupilParam.PTFlag = 0
-                # hps[8].set_text('Save Pupil Tracking')
-                # hps[8].set_backgroundcolor([0.941176, 0.941176, 0.941176])
-                # hps[8].set_foregroundcolor([0, 0, 0])
                 DateString = time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime())
                 PupilData = {'Data': PupilParam.PTData, 'Pixel_calibration': PupilParam.pixel_calibration}
                 np.savez(f'./VideoAndRef/{Prefix}DataPupil_{DateString}.npz', PupilData)
                 PupilParam.reset_PTData()
     pass
 
-def handle_focus_measure(PupilParam, event, frame_size):
+def handle_focus_measure(PupilParam, frame, frame_size):
+    print("handle_focus_measure")
     """
     Computes the focus measure of a region of interest (ROI) in an image 
     based on the Laplacian filter and then appends it to a provided string.
     """
     focus_measure_msg = ""
     # Check if the show_focus attribute is set to 1
-    if PupilParam.show_focus == 1:
+    if PupilParam.show_focus:
         # Extract the region of interest from the image
-        roi = event.Data[round(frame_size[0]/2)-30 : round(frame_size[0]/2)+30, 0:frame_size[1]]
+        roi = frame[round(frame_size[0]/2)-30 : round(frame_size[0]/2)+30, 0:frame_size[1]]
         # Convert the region to grayscale
         gray_roi = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
         # Apply the Laplacian filter to the grayscale region
-        FM = cv2.filter2D(np.float64(gray_roi), -1, PupilParam.LAP, borderType=cv2.BORDER_REPLICATE)
+        laplacian = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3)) - 1
+        FM = cv2.filter2D(np.float64(gray_roi), -1, laplacian, borderType=cv2.BORDER_REPLICATE)
         # Compute the square of the filtered image and then its mean value
         FM = round(np.mean(FM**2))
         # Update the focus_measure_msg  variable
         focus_measure_msg = f"{focus_measure_msg} F={FM}"
-    
     return focus_measure_msg 
 
 def track_pupil_extquarter_reflection(image, is_graph):
+    print("track_pupil_extquarter_reflection")
     """Finding the coordinates of 2 elipse reflections in the pupil.
-
     Args:
         image (_type_): Input image to find reflection on.
         is_graph (bool): True if we want to display the image while the process is running.
@@ -376,9 +342,10 @@ def track_pupil_extquarter_reflection(image, is_graph):
         plt.figure(30)
         plt.imshow(image, cmap='gray')
         plt.axis('image')
+        
+    image = cv2.GaussianBlur(image, (5, 5), 0)
     
-
-    white_pixel_threshold = 254
+    white_pixel_threshold = 252
     _, binarized_image = cv2.threshold(image, white_pixel_threshold, 255, cv2.THRESH_BINARY)
     
     # Apply connected component analysis
@@ -387,12 +354,14 @@ def track_pupil_extquarter_reflection(image, is_graph):
     if num_white_pixel_groups > 1:
         # Find the largest connected component (excluding the background)
         largest_label = np.argmax(white_pixel_group_info[1:, cv2.CC_STAT_AREA]) + 1
+        print("Largest pix group")
+        print(largest_label)
         
         # Get the bounding box coordinates of the largest connected component
         x, y, w, h = white_pixel_group_info[largest_label, cv2.CC_STAT_LEFT], white_pixel_group_info[largest_label, cv2.CC_STAT_TOP], \
                     white_pixel_group_info[largest_label, cv2.CC_STAT_WIDTH], white_pixel_group_info[largest_label, cv2.CC_STAT_HEIGHT]
         
-        return x, x + w, y, y - h, 0
+        return x, x + w, y, y + h, 0
     
     return 0, 0, 0, 0, -1
     
