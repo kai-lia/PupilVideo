@@ -12,7 +12,7 @@ def PupilTrackingAlg(frame, PupilParam, SYSPARAMS, display, ax):
     PupilParam.frame_width = frame_size[1]
     PupilParam.frame_height  = frame_size[0]
     # redundant? RBE = calculate_RBE(half_kernel, PupilParam.pixel_calibration) # sets RBE based on half kernel
-        
+    
     """" TODO: hps=get(get(get(himage,'Parent'),'Parent'),'Children'); """
     if PupilParam.tracking:
         # Runs tracking function

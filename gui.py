@@ -92,7 +92,7 @@ class ProjectorGUI:
     def make_top_frame(self, top_frame):
         print("make_top_frame")
         """makes the top button bar, horizontal layout
-        buttons : Quit, Start Video, Set Refernce, Load Refernce, Disable Tracking, Zoom In, Draw BE
+        buttons : Quit, Start Video, Set Refernce, Load Refernce, Disable Tracking, Draw BE
         """
         # buttons
         self.tk_quit_button = tk.Button(top_frame, text="Quit", command=self.tk_quit)
@@ -106,8 +106,6 @@ class ProjectorGUI:
         self.tk_tracking_button = tk.Button(top_frame, text="Disable Tracking",
                                                     command=self.tk_disable_tracking)
         self.tk_tracking_button.pack(side='left', expand=True, fill='both')
-        self.tk_zoom_in_button = tk.Button(top_frame, text="Zoom In", command=self.tk_zoom_in)
-        self.tk_zoom_in_button.pack(side='left', expand=True, fill='both')
         self.tk_draw_be_button = tk.Button(top_frame, text="Draw BE", command=self.tk_draw_be)
         self.tk_draw_be_button.pack(side='left', expand=True, fill='both')
 
@@ -676,11 +674,6 @@ class ProjectorGUI:
         """Button 15 enables tracking"""
         self.PupilParam.enable_tracking()
         self.tk_tracking_button.configure(text="Disable Tracking", command=self.tk_disable_tracking)
-        return
-
-    """zooms in"""
-    def tk_zoom_in(self):
-        """Button 16: zooms in"""
         return
     
     def tk_show_focus(self):
