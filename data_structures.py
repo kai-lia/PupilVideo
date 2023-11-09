@@ -126,6 +126,7 @@ class CalibrationSettings:
       
 class SysParams:
     def __init__(self):
+        self.pupil_tracker = 0
         self.pupil_duration = 0
         self.pupil_camera_fps = 0
         self.pupil_diff_x = []

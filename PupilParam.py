@@ -28,10 +28,10 @@ class PupilParam:
         self.Re = -1000
         self.Th = -1
 
-        self.Flag = False
-        self.BEFlag = False
-        self.PTFlag = False
-        self.PTData = None
+        self.flag = False
+        self.BEflag = False
+        self.pupil_tracking_flag = False
+        self.pupil_tracking_Data = None
 
         # video state
         self.video = False # if video is on
@@ -39,8 +39,8 @@ class PupilParam:
 
         self.MAX_NUM_OF_SAVABLE_FRAMES = 5
         self.saving_frequency = 0.3
-        self.FrameCount = self.MAX_NUM_OF_SAVABLE_FRAMES
-        self.Sync = False
+        self.frame_count = self.MAX_NUM_OF_SAVABLE_FRAMES
+        self.sync = False
 
         self.show_reference = False
         self.tracking = True
@@ -54,6 +54,8 @@ class PupilParam:
         self.Ltotaloffx = 1
         self.DataSync = None
         self.lap = None
+        
+        self.start_save_time = None
         
         #coreslates for Calibration Settings
         self.pixel_calibration = 49.5517721152208 
@@ -69,7 +71,7 @@ class PupilParam:
         self.p1 = None
          # c plots
         self.c1, self.c2, self.c3, self.c4, self.c5 = (None,)*5
-        # r plots if BEFlag, square
+        # r plots if BEflag, square
         self.r1, self.r2, self.r3, self.r4 = (None,)*4
 
 # x1, x2, y1, y2 Features for tracking
@@ -138,10 +140,10 @@ class PupilParam:
     def enable_TCA_comp(self):
         self.TCA_comp = True
 
-# ### PTT stuff ### #
-    # PTData
-    def reset_PTData(self):
-        self.PTData = []
+# ### pupil_tracking_T stuff ### #
+    # pupil_tracking_Data
+    def reset_pupil_tracking_Data(self):
+        self.pupil_tracking_Data = []
         
     """Reset_vectors:
         used when opening new video instance or zooming in

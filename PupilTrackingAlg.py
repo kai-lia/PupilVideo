@@ -2,11 +2,12 @@ import numpy as np
 from matplotlib import pyplot as plt
 import cv2
 import datetime
+import datetime
 from datetime import datetime
 import time
 
 def PupilTrackingAlg(frame, PupilParam, SYSPARAMS, display, ax):
-    DEPTH_OF_BUFFER = 5
+    DEpupil_tracking_H_OF_BUFFER = 5
     # frame properties 
     frame_size = frame.shape[:2]
     PupilParam.frame_width = frame_size[1]
@@ -33,10 +34,7 @@ def PupilTrackingAlg(frame, PupilParam, SYSPARAMS, display, ax):
                  PupilParam.y2 / PupilParam.pixel_calibration,
                  PupilParam.track_error,
                  block_fps]
-
-    if PupilParam.PTFlag:
-        PupilParam.PTData.append(recording)
-        
+  
     """ TODO: line 81-93 no idea what the purpose of this code is probabbly irrelavent ****
 if PupilParam.Sync==1 & etime(clock,[2000 1 1 0 0 0]) - SYSPARAMS.pupil_duration < 0 cmp"""
     #display_tracking_data(PupilParam, ax)
@@ -49,15 +47,13 @@ if PupilParam.Sync==1 & etime(clock,[2000 1 1 0 0 0]) - SYSPARAMS.pupil_duration
     StimParams = 0
     handle_TCA_computation(PupilParam, StimParams, SYSPARAMS)
     # Handle video saving mechanism
-    handle_video_saving(PupilParam)
+    #handle_video_saving(PupilParam)
 
     PupilParam.Ltotaloffx += 1
-    if PupilParam.Ltotaloffx >= (DEPTH_OF_BUFFER - 1): #filter through buffer 5 times
+    if PupilParam.Ltotaloffx >= (DEpupil_tracking_H_OF_BUFFER - 1): #filter through buffer 5 times
         PupilParam.Ltotaloffx = 0
     
     handle_TCA_computation(PupilParam, StimParams, SYSPARAMS)
-
-    handle_video_saving(PupilParam)
     
     handle_focus_measure(PupilParam, frame, frame_size)
 
@@ -147,7 +143,7 @@ def handle_boundary_error(PupilParam,frame_size):
     calibration_distance = PupilParam.pixel_calibration
     
     # Check for boundary error flag
-    if PupilParam.BEFlag:
+    if PupilParam.BEflag:
         # Set vertical centerline visualization
         PupilParam.r1 = [[half_frame_width] * frame_size[0], range(1, frame_size[0] + 1)]
      
@@ -255,11 +251,11 @@ def TCA_message(current_fps, difx, dify, pupil_TCA_x, pupil_TCA_y, pixel_calibra
         message = f'Hz= {current_fps}fps mm({difx / pixel_calibration:.1f}, ' \
                   f'{dify / pixel_calibration:.1f}) TCA=' \
                   f'{np.sqrt(pupil_TCA_x ** 2 + pupil_TCA_y ** 2):.1f}'
+                  
     else:
         message = f'Hz={current_fps}fps mm({difx / pixel_calibration:.1f}, ' \
                   f'{dify / pixel_calibration:.1f}) TCA=' \
                   f'{np.sqrt(pupil_TCA_x ** 2 + pupil_TCA_y ** 2):.1f}'
-
     return message
                     
 def TCA_no_tracking(PupilParam, SYSPARAMS):
@@ -283,23 +279,28 @@ def handle_video_saving(PupilParam):
     # The exact logic for this needs to be confirmed
     # This is just a skeleton of the function
     print("handle_video_saving")
-    if PupilParam.saving_video and PupilParam.FrameCount < PupilParam.MAX_NUM_OF_SAVABLE_FRAMES and \
-            time.time() - PupilParam.toc > PupilParam.SAVING_FREQUENCY:
-        VideoToSave.append(event.Data)
-        PupilParam.FrameCount += 1
-        PupilParam.tic()
+    if PupilParam.saving_video and PupilParam.frame_count < PupilParam.MAX_NUM_OF_SAVABLE_FRAMES:
+        current_time = datetime.now()
+        time_difference = current_time - PupilParam.start_save_time
+        if time_difference.total_seconds() > PupilParam.saving_frequency:
+            VideoToSave.append(event.Data)
+            PupilParam.frame_countt += 1
+            PupilParam.start_save_time = current_time
+        
+        
+   
     else:
-        if PupilParam.saving_video and PupilParam.FrameCount >= PupilParam.MAX_NUM_OF_SAVABLE_FRAMES:
+        if PupilParam.saving_video and PupilParam.frame_count >= PupilParam.MAX_NUM_OF_SAVABLE_FRAMES:
             PupilParam.saving_video = False
             DateString = time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime())
             np.savez(f'./VideoAndRef/{Prefix}VideoPupil_{DateString}.npz', VideoToSave)
             VideoToSave = []
-            if PupilParam.PTFlag == 1:
-                PupilParam.PTFlag = 0
+            if PupilParam.pupil_tracking_flag == 1:
+                PupilParam.pupil_tracking_flag = 0
                 DateString = time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime())
-                PupilData = {'Data': PupilParam.PTData, 'Pixel_calibration': PupilParam.pixel_calibration}
+                PupilData = {'Data': PupilParam.pupil_tracking_Data, 'Pixel_calibration': PupilParam.pixel_calibration}
                 np.savez(f'./VideoAndRef/{Prefix}DataPupil_{DateString}.npz', PupilData)
-                PupilParam.reset_PTData()
+                PupilParam.reset_pupil_tracking_Data()
     pass
 
 def handle_focus_measure(PupilParam, frame, frame_size):
