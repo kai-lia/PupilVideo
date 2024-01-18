@@ -133,7 +133,6 @@ def etime(end, start):
     
 
 def handle_boundary_error(PupilParam,frame_size):
-    print("handle_boundary_error")
     """
     Handle boundary errors and visualize accordingly.
     """
@@ -170,7 +169,6 @@ def handle_boundary_error(PupilParam,frame_size):
             r = [0,0]
 
 def handle_TCA_computation(PupilParam, StimParams, SYSPARAMS):
-    print("handle_TCA_computation")
     """
     Handle TCA computation and visualization
     """
@@ -201,7 +199,6 @@ def handle_TCA_computation(PupilParam, StimParams, SYSPARAMS):
         
         
 def calculate_line_dif(PupilParam):
-    print("calculate_line_dif")
     if PupilParam.show_reference:
         difx = PupilParam.ref_center_x - PupilParam.center_x
         dify = PupilParam.ref_center_y  - PupilParam.center_y
@@ -218,7 +215,6 @@ def calculate_TCA(SYSPARAMS, PupilParam, difx, dify):
     SYSPARAMS.pupil_TCA_y = PupilParam.TCAmmY * dify / PupilParam.pixel_calibration
     
 def TCA_compensation(PupilParam, SYSPARAMS, StimParams):
-    print("TCA_compensation")
     """
     TCA Compensation refers to methods used to correct for this aberration, 
     ensuring that image focus at the same point and overlap as intended.
@@ -238,12 +234,11 @@ def TCA_compensation(PupilParam, SYSPARAMS, StimParams):
                                f'{StimParams.aomoffs[1, 0]}#{StimParams.aomoffs[1, 1]}#' \
                                f'{StimParams.aomoffs[2, 0]}#{StimParams.aomoffs[2, 1]}#'
                 if SYSPARAMS.board == 'm':
-                    MATLABAomControl32(aligncommand)
+                    MATLABAomControl32(aligncommand) #does not exist 
                 else:
                     netcomm('write', SYSPARAMS.netcommobj, int8(aligncommand))
                     
 def TCA_message(current_fps, difx, dify, pupil_TCA_x, pupil_TCA_y, pixel_calibration):
-    print("TCA_message")
     """
     Handle message display based on FPS.
     """
@@ -251,7 +246,6 @@ def TCA_message(current_fps, difx, dify, pupil_TCA_x, pupil_TCA_y, pixel_calibra
         message = f'Hz= {current_fps}fps mm({difx / pixel_calibration:.1f}, ' \
                   f'{dify / pixel_calibration:.1f}) TCA=' \
                   f'{np.sqrt(pupil_TCA_x ** 2 + pupil_TCA_y ** 2):.1f}'
-                  
     else:
         message = f'Hz={current_fps}fps mm({difx / pixel_calibration:.1f}, ' \
                   f'{dify / pixel_calibration:.1f}) TCA=' \
@@ -259,7 +253,6 @@ def TCA_message(current_fps, difx, dify, pupil_TCA_x, pupil_TCA_y, pixel_calibra
     return message
                     
 def TCA_no_tracking(PupilParam, SYSPARAMS):
-    print("TCA_no_tracking")
     PupilParam.l4 = None
     
     # Construct tracking message
@@ -268,7 +261,7 @@ def TCA_no_tracking(PupilParam, SYSPARAMS):
 
     # Set tracking and difference parameters to default values
     SYSPARAMS.pupil_TCA_x = -10000
-    SYSPARAMS.pupil_TCA_y = -10000
+    SYSPARAMS.puPupilParam.BEflagpil_TCA_y = -10000
     SYSPARAMS.pupil_diff_x[PupilParam.Ltotaloffx] = -10000
     SYSPARAMS.pupil_diff_y[PupilParam.Ltotaloffx] = -10000
 
@@ -278,7 +271,6 @@ def handle_video_saving(PupilParam):
     """
     # The exact logic for this needs to be confirmed
     # This is just a skeleton of the function
-    print("handle_video_saving")
     if PupilParam.saving_video and PupilParam.frame_count < PupilParam.MAX_NUM_OF_SAVABLE_FRAMES:
         current_time = datetime.now()
         time_difference = current_time - PupilParam.start_save_time
@@ -287,8 +279,6 @@ def handle_video_saving(PupilParam):
             PupilParam.frame_countt += 1
             PupilParam.start_save_time = current_time
         
-        
-   
     else:
         if PupilParam.saving_video and PupilParam.frame_count >= PupilParam.MAX_NUM_OF_SAVABLE_FRAMES:
             PupilParam.saving_video = False
@@ -304,7 +294,6 @@ def handle_video_saving(PupilParam):
     pass
 
 def handle_focus_measure(PupilParam, frame, frame_size):
-    print("handle_focus_measure")
     """
     Computes the focus measure of a region of interest (ROI) in an image 
     based on the Laplacian filter and then appends it to a provided string.
@@ -326,7 +315,7 @@ def handle_focus_measure(PupilParam, frame, frame_size):
     return focus_measure_msg 
 
 def track_pupil_extquarter_reflection(image, is_graph):
-    print("track_pupil_extquarter_reflection")
+
     """Finding the coordinates of 2 elipse reflections in the pupil.
     Args:
         image (_type_): Input image to find reflection on.
