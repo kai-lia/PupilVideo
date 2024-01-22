@@ -56,7 +56,7 @@ def exception_troubleshoot(func):
 class ProjectorGUI:
     def __init__(self):
         self.tk_root = tk.Tk()
-        self.tk_root.geometry('1100x600')
+        self.tk_root.geometry('1750x600')
         self.tk_root.title('PupilVideoTrackingV2')
         self.type_pupil_file_name_prefix = ""
         self.PupilParam = PupilParam()
@@ -247,9 +247,16 @@ class ProjectorGUI:
 
         self.tk_TCA_XY_arcmin_mm_label = tk.Label(calibration_frame_bottom, text="TCA(X/Y)arcmin/mm")
         self.tk_TCA_XY_arcmin_mm_label.pack(side="left", expand=True, fill='both')
-        self.tk_TCA_XY_arcmin_mm_entry = tk.Entry(calibration_frame_bottom, textvariable=self.tk_TCA_XY_arcmin_mm)
-        self.tk_TCA_XY_arcmin_mm_entry.insert(0, "3.5/3.5")
-        self.tk_TCA_XY_arcmin_mm_entry.pack(side="left", expand=True, fill='both')
+        self.tk_TCA_X_arcmin_mm_entry = tk.Entry(calibration_frame_bottom, textvariable=self.tk_TCA_XY_arcmin_mm)
+        self.tk_TCA_Y_arcmin_mm_entry = tk.Entry(calibration_frame_bottom, textvariable=self.tk_TCA_XY_arcmin_mm)
+        self.tk_TCA_X_arcmin_mm_entry.insert(0, "3.5")
+        self.tk_TCA_Y_arcmin_mm_entry.insert(0, "3.5")
+        
+        self.tk_TCA_Y_arcmin_mm_entry.pack(side="left", expand=True, fill='both')
+        self.tk_TCA_XY_arcmin_mm_divide = tk.Label(calibration_frame_bottom, text="/")
+        self.tk_TCA_XY_arcmin_mm_divide.pack(side="left", expand=True, fill='both')
+        self.tk_TCA_X_arcmin_mm_entry.pack(side="left", expand=True, fill='both')
+        
 
         video_camera_frame.mainloop()
 
@@ -269,8 +276,10 @@ class ProjectorGUI:
     
     def tk_quit(self):
         """Button 1: quits and exits program (button 1) if dataScn will save the file"""
-        if self.PupilParam.DataSync is not None:
-            self.save_trial_pupil_data(self.get_type_pupil_file_name_prefix(), pupil_data)
+        if self.PupilParam.saving_video:
+            self.tk_recording_video()
+        if self.PupilParam.pupil_tracking_flag:
+            self.tk_recording_pupil()
         self.tk_root.destroy()
 
     def tk_start_video(self):
@@ -307,11 +316,11 @@ class ProjectorGUI:
         self.camera.release()
         cv2.destroyAllWindows()
         
+        if self.PupilParam.saving_video:
+            self.tk_recording_video()
         if self.PupilParam.pupil_tracking_flag:
-            self.PupilParam.pupil_tracking_flag = False
-            
-        # update button state
-        self.tk_save_pupil_tracking_button.configure(text='Save Video')       
+            self.tk_recording_pupil()
+                
         self.tk_start_video_button.configure(text="Start Video", command=self.tk_start_video)
 
     def video_stream(self):
@@ -622,8 +631,6 @@ class ProjectorGUI:
 
     def tk_disable_tca_correction(self):
         """Button 14: """
-        self.PupilParam.disable_TCA_comp()
-         
         if self.SYSPARAMS.realsystem == 1:
             # Equivalent Python code for the MATLAB aligncommand logic
             aligncommand = 'UpdateOffset#'
@@ -640,11 +647,9 @@ class ProjectorGUI:
                 #netcomm_write(SYSPARAMS['netcommobj'], aligncommand.encode())  # Replace with actual Python function
             
         self.PupilParam.disable_TCA_comp()
-
         # Reset button to original properties
         self.tk_focus_button.configure(text="Enable TCA Correction",
                                        command=self.tk_enable_tca_correction)
-        
 
     def tk_disable_tracking(self):
         """ Button 15 disables tracking"""
