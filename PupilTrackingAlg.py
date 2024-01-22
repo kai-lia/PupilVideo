@@ -248,14 +248,11 @@ def TCA_message(current_fps, difx, dify, pupil_TCA_x, pupil_TCA_y, pixel_calibra
     return message
                     
 def TCA_no_tracking(PupilParam, SYSPARAMS):
+    """when not detected or Disable Tracking Button is pushed """
     PupilParam.l4 = None
-    
-    # Construct tracking message
-    focus_measure_msg  = f'fps={SYSPARAMS.PupilCamerafps} no tracking'
-
     # Set tracking and difference parameters to default values
     SYSPARAMS.pupil_TCA_x = -10000
-    SYSPARAMS.puPupilParam.BEflagpil_TCA_y = -10000
+    SYSPARAMS.pupil_TCA_y = -10000
     SYSPARAMS.pupil_diff_x[PupilParam.Ltotaloffx] = -10000
     SYSPARAMS.pupil_diff_y[PupilParam.Ltotaloffx] = -10000
 
