@@ -53,6 +53,7 @@ class PupilParam:
         self.TCA_comp = False
         self.Ltotaloffx = 1
         self.DataSync = None
+        self.sync = False
         self.lap = None
         
         self.start_save_time = None
@@ -107,7 +108,7 @@ class PupilParam:
 
     # DataSync
     def reset_DataSync(self):
-        self.DataSync = None
+        self.DataSync = []
 
     #sync ops for "Save Sync button"
     def save_sync(self):
