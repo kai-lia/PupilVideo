@@ -1,4 +1,5 @@
 import os
+import csv
 from tkinter import simpledialog
 
 import cv2
@@ -508,17 +509,17 @@ class ProjectorGUI:
         self.PupilParam.pupil_tracking_flag = True
         self.PupilParam.pupil_tracking_TO = datetime.now()
         block_fps = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        self.PupilParam.pupil_tracking_Data = [0, 0, 0, 0, 0, block_fps]
+        self.PupilParam.pupil_tracking_Data = [[0, 0, 0, 0, block_fps]]
             
         self.tk_save_pupil_tracking_button.configure(text='Recording Pupil ...', command=self.tk_recording_pupil)
         
        
     def tk_recording_pupil(self):
         """Pairwise on button 8"""
-        if self.video:
+        if self.PupilParam.video:
             self.PupilParam.pupil_tracking_flag = False
             self.save_pupil_data("DataPupil_", self.PupilParam.pupil_tracking_Data)
-            self.PupilData.Pixel_calibration = self.PupilParam.Pixel_calibration # confusion but was in matlab code
+            # self.pupilData.pixel_calibration = self.PupilParam.pixel_calibration # confusion but was in matlab code
             self.PupilParam.pupil_tracking_Data = []
             self.tk_save_pupil_tracking_button.configure(text='Save Pupil Tracking',  command=self.tk_save_pupil_tracking)
             
@@ -728,12 +729,11 @@ class ProjectorGUI:
         prefix = self.tk_type_pupil_file_name_prefix_entry.get()
         date_string = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         date_string = date_string.replace(' ', '_').replace(':', '_')
-        save_file_name = f'.\\VideoAndRef\\{prefix}]{file_name}{date_string}.txt'
+        save_file_name = f'.\\VideoAndRef\\{prefix}]{file_name}{date_string}.csv'
 
         with open(save_file_name, 'w') as file:
-            for item in pupil_data:
-                file.write(f"{item}\n")
-
+            writer = csv.writer(file)
+            writer.writerows(pupil_data)
 
     def save_pupil_video(prefix, video_to_save):
         """
