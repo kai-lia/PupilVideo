@@ -256,7 +256,6 @@ class ProjectorGUI:
         self.tk_TCA_XY_arcmin_mm_divide = tk.Label(calibration_frame_bottom, text="/")
         self.tk_TCA_XY_arcmin_mm_divide.pack(side="left", expand=True, fill='both')
         self.tk_TCA_X_arcmin_mm_entry.pack(side="left", expand=True, fill='both')
-        
 
         video_camera_frame.mainloop()
 
@@ -392,21 +391,21 @@ class ProjectorGUI:
             H1 = int(round(self.PupilParam.frame_height / 2))
             V1 = int(round(self.PupilParam.frame_width / 2))
             Dmm = int(1 * self.PupilParam.pixel_calibration)
-
+            
             # Update or create plot r1
-            self.PupilParam.r1, = plt.plot(range(self.PupilParam.frame_height), [V1] * self.PupilParam.frame_height, linewidth=6, color='red')
+            self.PupilParam.r1, =  self.ax.plot(range(self.PupilParam.frame_height), [V1] * self.PupilParam.frame_height, linewidth=1, color='red')
 
             # Update or create plot r2
             x_values_r2 = [x for x in range(H1 - Dmm, -1, -Dmm)] + [x for x in range(H1 + Dmm, self.PupilParam.frame_height, Dmm)]
-            self.PupilParam.r2, = plt.plot(x_values_r2, [V1] * len(x_values_r2), '+', linewidth=2, color='red')
+            self.PupilParam.r2, =  self.ax.plot(x_values_r2, [V1] * len(x_values_r2), '+', linewidth=1, color='red')
 
             # Update or create plot r3
-            self.PupilParam.r3, = plt.plot([H1] * self.PupilParam.frame_width, range(self.PupilParam.frame_width), linewidth=6, color='red')
+            self.PupilParam.r3, =  self.ax.plot([H1] * self.PupilParam.frame_width, range(self.PupilParam.frame_width), linewidth=1, color='red')
 
             # Update or create plot r4
             y_values_r4 = [y for y in range(V1 - Dmm, -1, -Dmm)] + [y for y in range(V1 + Dmm, self.PupilParam.frame_width, Dmm)]
-            self.PupilParam.r4, = plt.plot([H1] * len(y_values_r4), y_values_r4, '+', linewidth=2, color='red')
-
+            self.PupilParam.r4, =  self.ax.plot([H1] * len(y_values_r4), y_values_r4, '+', linewidth=2, color='red')
+            
             
         
         self.ax.imshow(frame_rgb, aspect='auto')
