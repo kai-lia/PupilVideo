@@ -76,7 +76,6 @@ if PupilParam.Sync==1 & etime(clock,[2000 1 1 0 0 0]) - SYSPARAMS.pupil_duration
     return RBE"""
 
 """def display_tracking_data(PupilParam, ax):
-    print("display_tracking_data")
 
     #Display tracking data on the UI or console
 
@@ -99,7 +98,6 @@ if PupilParam.Sync==1 & etime(clock,[2000 1 1 0 0 0]) - SYSPARAMS.pupil_duration
         
 
 def handle_fps_counting(PupilParam, block_fps):
-    print("handle_fps_counting")
     """ Manage FPS counting for the pupil tracking.
     Updates FPS values in a buffer and resets the reference index
     when the end of the buffer is reached. The difference between the current time
@@ -191,9 +189,6 @@ def handle_TCA_computation(PupilParam, StimParams, SYSPARAMS):
         message = TCA_message(SYSPARAMS.PupilCamerafps, difx, dify, SYSPARAMS.pupil_TCA_x, SYSPARAMS.pupil_TCA_y, PupilParam.pixel_calibration)
         print(message)
         
-        # print "stop help.." if distance exceeds threshold
-        if distance > PupilParam.tolerated_pupil_dist:
-            print("stop help distance exceeds threshold")
     else: # Handle the case when tracking is not happening
         TCA_no_tracking(PupilParam, SYSPARAMS)
         
@@ -203,7 +198,7 @@ def calculate_line_dif(PupilParam):
         difx = PupilParam.ref_center_x - PupilParam.center_x
         dify = PupilParam.ref_center_y  - PupilParam.center_y
     else:
-        print("l4 appearing")
+
         PupilParam.l4 = None
         
         difx = round(PupilParam.frame_width / 2 - PupilParam.center_x)
@@ -257,7 +252,6 @@ def TCA_no_tracking(PupilParam, SYSPARAMS):
     
     # Construct tracking message
     focus_measure_msg  = f'fps={SYSPARAMS.PupilCamerafps} no tracking'
-    print(focus_measure_msg)
 
     # Set tracking and difference parameters to default values
     SYSPARAMS.pupil_TCA_x = -10000
@@ -285,8 +279,8 @@ def handle_video_saving(PupilParam):
             DateString = time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime())
             np.savez(f'./VideoAndRef/{Prefix}VideoPupil_{DateString}.npz', VideoToSave)
             VideoToSave = []
-            if PupilParam.pupil_tracking_flag == 1:
-                PupilParam.pupil_tracking_flag = 0
+            if PupilParam.pupil_tracking_flag == True:
+                PupilParam.pupil_tracking_flag = False
                 DateString = time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime())
                 PupilData = {'Data': PupilParam.pupil_tracking_Data, 'Pixel_calibration': PupilParam.pixel_calibration}
                 np.savez(f'./VideoAndRef/{Prefix}DataPupil_{DateString}.npz', PupilData)
@@ -344,9 +338,6 @@ def track_pupil_extquarter_reflection(image, is_graph):
     if num_white_pixel_groups > 1:
         # Find the largest connected component (excluding the background)
         largest_label = np.argmax(white_pixel_group_info[1:, cv2.CC_STAT_AREA]) + 1
-        print("Largest pix group")
-        print(largest_label)
-        
         # Get the bounding box coordinates of the largest connected component
         x, y, w, h = white_pixel_group_info[largest_label, cv2.CC_STAT_LEFT], white_pixel_group_info[largest_label, cv2.CC_STAT_TOP], \
                     white_pixel_group_info[largest_label, cv2.CC_STAT_WIDTH], white_pixel_group_info[largest_label, cv2.CC_STAT_HEIGHT]

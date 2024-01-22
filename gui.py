@@ -89,7 +89,6 @@ class ProjectorGUI:
         self.make_right_frame(right_frame)
        
     def make_top_frame(self, top_frame):
-        print("make_top_frame")
         """makes the top button bar, horizontal layout
         buttons : Quit, Start Video, Set Refernce, Load Refernce, Disable Tracking, Draw BE
         """
@@ -116,7 +115,6 @@ class ProjectorGUI:
         button: Save Pupil Tracking
         entry: Type Pupil File Name"""
         # buttons
-        print("make_left_frame")
         self.tk_sync_button = tk.Button(left_frame, text="Sync Save", command=self.tk_sync_save)
         self.tk_sync_button.pack(expand=True)
         self.tk_save_video_button = tk.Button(left_frame, text="Save Video", command=self.tk_save_video)
@@ -164,7 +162,6 @@ class ProjectorGUI:
           entry: tollernc(.mm), TCA(X/Y)arcmin/mm
           button: Show Focus"""
         # Box for video camera settings
-        print("make_right_frame")
         video_camera_frame = tk.Frame(right_frame, highlightbackground="black", highlightthickness=2)
         video_camera_frame.pack(side="top", expand=True, fill='both')
 
@@ -259,7 +256,6 @@ class ProjectorGUI:
     def make_middle_frame(self, middle_frame):
         # open video source (by default this will try to open the computer webcam)
         # creating figure
-        print("make_middle_frame")
         fig, self.ax = plt.subplots(figsize=(5, 5))
         self.ax.tick_params(axis='both', which='major', labelsize=5) # change axis font size bc why not
         self.video_canvas = FigureCanvasTkAgg(fig, master=middle_frame)
@@ -277,10 +273,8 @@ class ProjectorGUI:
         self.tk_root.destroy()
 
     def tk_start_video(self):
-        #TODO: ALEX PLS DOUBLE CHECK
         """Button 2: starts video
         also layer with existing graph so we can plot on video """
-        print("tk_start_video")
         self.PupilParam.video = True
         self.camera = cv2.VideoCapture(0)
         # Camera settings
@@ -300,7 +294,6 @@ class ProjectorGUI:
 
     def set_video_calibration(self):
         """Set video calibration factors."""
-        print("set_video_calibration")
         self.PupilParam.pixel_calibration = self.CalibrationSettings.get_pixel_calibration()
         self.PupilParam.TCAmmX = self.CalibrationSettings.get_TCAmmX()
         self.PupilParam.TCAmmY = self.CalibrationSettings.get_TCAmmY()
@@ -308,14 +301,13 @@ class ProjectorGUI:
         
     def tk_stop_video(self):
         """ stops video"""
-        print("tk_stop_video")
         self.PupilParam.video = False
         self.PupilParam.sync = False
         self.camera.release()
         cv2.destroyAllWindows()
         
         if self.PupilParam.pupil_tracking_flag:
-            self.PupilParam.pupil_tracking_flag = 0
+            self.PupilParam.pupil_tracking_flag = False
             
         # update button state
         self.tk_save_pupil_tracking_button.configure(text='Save Video')       
@@ -323,7 +315,6 @@ class ProjectorGUI:
 
     def video_stream(self):
         " consistent loop until stop vid "
-        print("video_stream")
         if not self.PupilParam.video:
             return
         # Read a frame from the video feed
@@ -331,23 +322,20 @@ class ProjectorGUI:
         # If the frame isn't read correctly, exit
         if not ret:  
             return
-        #calls and exicutes our trackign 
-        print("before")
-        print(self.PupilParam.x1, self.PupilParam.x2, self.PupilParam.y1, self.PupilParam.y2)
+        #calls and exicutes our tracking alg
         PupilTrackingAlg(frame, self.PupilParam, self.SYSPARAMS, self.video_frame.pack(), self.ax) # Process the frame for pupil tracking
-        print("after")
         
         print(self.PupilParam.x1, self.PupilParam.x2, self.PupilParam.y1, self.PupilParam.y2)
         # Save the frame to video if recording
         #once less than just call tk_record
+        if self.PupilParam.pupil_tracking_flag:
+            block_fps = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            self.PupilParam.pupil_tracking_Data.append([self.PupilParam.x1, self.PupilParam.x2, 
+                                                   self.PupilParam.y1, self.PupilParam.y2, block_fps])
+            
         if self.PupilParam.saving_video and self.PupilParam.frame_count < self.PupilParam.MAX_NUM_OF_SAVABLE_FRAMES:
             current_time = datetime.now()
             time_difference = current_time - self.PupilParam.start_save_time
-            
-            # a = time_difference.total_seconds()
-            # b = self.PupilParam.saving_frequency
-            # x = time_difference.total_seconds() > self.PupilParam.saving_frequency
-            # print(x)
             
             if time_difference.total_seconds() > self.PupilParam.saving_frequency:
                 self.video_writer.write(frame)
@@ -365,7 +353,6 @@ class ProjectorGUI:
         """
         Display the frame on the user interface.
         """
-        print("display_video_frame")
         self.ax.clear() #clear for less storage
         
         if (self.PupilParam.x1 != -1):
@@ -383,12 +370,6 @@ class ProjectorGUI:
             
             self.ax.add_patch(track_rect)
             
-            
-        """if self.PupilParam.track_error>-1:
-            width = self.PupilParam.p1[0][0] - self.PupilParam.p1[0][1]
-            height = self.PupilParam.p1[1][0] - self.PupilParam.p1[1][0]
-            rect = patches.Rectangle((self.PupilParam.x1, self.PupilParam.y1), width, height, linewidth=1, edgecolor='r', fill=False)
-            self.ax.add_patch(rect)"""
         if self.PupilParam.show_reference:
             width = self.PupilParam.ref_x2 - self.PupilParam.ref_x1  # Width of the rectangle
             height = self.PupilParam.ref_y2 - self.PupilParam.ref_y1  # Height of the rectangle
@@ -423,7 +404,7 @@ class ProjectorGUI:
         
         # TODO: Save reference coordinates like matlab file
         # np.savez('./VideoAndRef/RefPupil_' + date_string, Refx1=ref_x1, Refx2=ref_x2, Refy1=ref_y1, Refy2=ref_y2)
-        
+    
         self.video_canvas.get_tk_widget().config(cursor='')
         self.video_canvas.mpl_disconnect(self.cid)
         self.tk_reference_button.configure(text="Unset Reference", command=self.tk_unset_reference)
@@ -474,88 +455,22 @@ class ProjectorGUI:
         self.tk_draw_be_button.configure(text='Draw BE',  command=self.tk_draw_be)
 
     def tk_sync_save(self):
-        """Button 9: sync save"""
-        if (self.PupilParam.video):
-            self.tk_sync_wait()
-            return
-        if self.PupilParam.DataSync:
-            current_time = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-            prefix = self.tk_type_pupil_file_name_prefix_entry.get()  
-            file_name = f"Trial_DataPupil_{prefix}_{current_time}.mat"
-            file_path = os.path.join(".\\VideoAndRef\\", file_name)
-
-            # Assuming you have a method to save the data in .mat format
-            self.save_pupil_data(file_path, self.PupilParam.DataSync)
+        """Button 9: sync save
+        initializes the next trigger """
+        if self.PupilParam.video:
+            self.PupilParam.sync = True
             self.PupilParam.DataSync = []
-    
-            
-            pupil_data = self.PupilParam.DataSync
-            # Save PupilData to a file
-            self.save_trial_pupil_data(prefix, pupil_data) 
-            self.PupilParam.reset_DataSync()
-        
-        self.PupilParam.save_sync()
-        self.tk_automatic_button.configure(text="Wait for Sync", command=self.tk_sync_wait)
-        return
-    
+            self.tk_automatic_button.configure(text="Wait for Sync", command=self.tk_sync_wait)
 
     def tk_sync_wait(self):
         """sync wait"""
-        self.PupilParam.wait_sync()
-        self.PupilParam.reset_DataSync()
+        self.PupilParam.sync = False
+        if self.PupilParam.DataSync.size:
+            file_name = "Trial_DataPupil_"
+            self.save_pupil_data(file_name, self.PupilParam.DataSync)
+            self.PupilParam.DataSync = []
+            
         self.tk_automatic_button.configure(text="Sync Save", command=self.tk_sync_save)
-        return
-    
-    """% --- Executes on button press in pushbutton5.
-function pushbutton5_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton5 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-global PupilParam
-global VideoToSave;
-if PupilParam.Video==1 & PupilParam.SavingVideo==0
-    PupilParam.SavingVideo=1;
-    # ignore button 
-    set(hObject,'String','Recording Video ...');
-    set(hObject,'BackgroundColor',[0.75 0 0]); set(hObject,'ForegroundColor',[1 1 1]);
-    #
-    PupilParam.FrameCount=1;
-    VideoToSave=[];
-    tic;
-    
-    if PupilParam.PTFlag==0,
-        PupilParam.PTFlag=1;
-        PupilParam.PTT0=now;
-        #ignore button
-        set(handles.pushbutton8,'String','Recording Pupil ...');
-        set(handles.pushbutton8,'BackgroundColor',[0.75 0 0]); set(handles.pushbutton8,'ForegroundColor',[1 1 1]);
-        #
-        PupilParam.PTData=[];
-    end
-    
-else
-    if  PupilParam.Video==1 & PupilParam.SavingVideo==1
-        PupilParam.SavingVideo=0;
-        Prefix=get(handles.edit3,'String');
-        set(hObject,'String','Save Video');
-        set(hObject,'BackgroundColor',[0.941176 0.941176 0.941176]); set(hObject,'ForegroundColor',[0 0 0]);
-        DateString = datestr(clock); Spaceidx=findstr(DateString,' '); DateString(Spaceidx)='_'; Spaceidx=findstr(DateString,':'); DateString(Spaceidx)='_';
-        save(['.\VideoAndRef\',Prefix,'VideoPupil_',DateString], 'VideoToSave')
-        VideoToSave=[];
-        
-        %set(handles.pushbutton9,'String','Sync Save'); set(handles.pushbutton9,'BackgroundColor',[0.941176 0.941176 0.941176]); set(handles.pushbutton9,'ForegroundColor',[0 0 0]); 
-        
-        if PupilParam.PTFlag==1 if is pupil tracking
-            PupilParam.PTFlag=0;
-            set(handles.pushbutton8,'String','Save Pupil Tracking');
-            set(handles.pushbutton8,'BackgroundColor',[0.941176 0.941176 0.941176]); set(handles.pushbutton8,'ForegroundColor',[0 0 0]);
-            DateString = datestr(clock); Spaceidx=findstr(DateString,' '); DateString(Spaceidx)='_'; Spaceidx=findstr(DateString,':'); DateString(Spaceidx)='_';
-            PupilData.Data=PupilParam.PTData; PupilData.Pixel_calibration=PupilParam.Pixel_calibration;
-            save(['.\VideoAndRef\',Prefix,'DataPupil_',DateString], 'PupilData')
-            PupilParam.PTData=[];
-        end
-    end
-end"""
 
     def tk_save_video(self):
         """Button 5: save video"""
@@ -569,11 +484,9 @@ end"""
         self.video_writer = cv2.VideoWriter('temp_video.avi', cv2.VideoWriter_fourcc(*'XVID'), 30, tuple(self.PupilParam.vidRes))
         self.tk_save_video_button.configure(text="Recording Video ...",command = self.tk_recording_video)
             
-        if not self.PupilParam.pupil_tracking_flag: 
-            self.PupilParam.pupil_tracking_flag = True
-            self.PupilParam.pupil_tracking_T0 = datetime.now()
-            self.PupilParam.pupil_tracking_Data = []
-            self.tk_save_pupil_tracking_button.configure(text='Recording Pupil ...', command = self.tk_recording_video)
+        if not self.PupilParam.pupil_tracking_flag:
+            print("\n\n\n\n HELLO \n\n\n\n")
+            self.tk_save_pupil_tracking()
             
     def tk_recording_video(self):
         """Button 5: save video"""
@@ -583,20 +496,32 @@ end"""
             self.video_writer.release()
             # final_name = Prefix + "_video.avi"
             # os.rename('temp_video.avi', final_name)
-        
-
             if self.PupilParam.pupil_tracking_flag:
-                self.PupilParam.pupil_tracking_flag = False
-                PupilData = {
-                    'Data': self.PupilParam.pupil_tracking_Data,
-                    'Pixel_calibration': self.PupilParam.pixel_calibration
-                }
-                # self.save_pupil_data(Prefix, PupilData)
-                self.PupilParam.pupil_tracking_Data = []
-                self.tk_save_pupil_tracking_button.configure(text='Save Pupil Tracking', command = self.tk_save_tracking)
+                self.tk_recording_pupil()
             self.tk_save_video_button.configure(text='Save Video', command = self.tk_save_video)
     
-
+    def tk_save_pupil_tracking(self):
+        """ Button 8: values collected nothing functally needed """
+        if not self.PupilParam.video:
+            return 
+     
+        self.PupilParam.pupil_tracking_flag = True
+        self.PupilParam.pupil_tracking_TO = datetime.now()
+        block_fps = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        self.PupilParam.pupil_tracking_Data = [0, 0, 0, 0, 0, block_fps]
+            
+        self.tk_save_pupil_tracking_button.configure(text='Recording Pupil ...', command=self.tk_recording_pupil)
+        
+       
+    def tk_recording_pupil(self):
+        """Pairwise on button 8"""
+        if self.video:
+            self.PupilParam.pupil_tracking_flag = False
+            self.save_pupil_data("DataPupil_", self.PupilParam.pupil_tracking_Data)
+            self.PupilData.Pixel_calibration = self.PupilParam.Pixel_calibration # confusion but was in matlab code
+            self.PupilParam.pupil_tracking_Data = []
+            self.tk_save_pupil_tracking_button.configure(text='Save Pupil Tracking',  command=self.tk_save_pupil_tracking)
+            
     def tk_secs(self):
         """ with new value entry the savable frames/freq changes"""
         secs = int(self.tk_secs_entry.get())
@@ -611,38 +536,6 @@ end"""
         self.PupilParam.MAX_NUM_OF_SAVABLE_FRAMES = secs*fps
         self.PupilParam.saving_frequency = 1/fps
 
-    def tk_save_pupil_tracking(self):
-        """ Button 8: values collected nothing functally needed """
-        prefix = self.tk_type_pupil_file_name_prefix_entry.get()
-        if self.PupilParam.video and not self.PupilParam.pupil_tracking_flag:
-            self.PupilParam.pupil_tracking_flag = True
-            self.PupilParam.pupil_tracking_TO = datetime.datetime.now()
-            block_fps = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            self.PupilParam.pupil_tracking_Data = [0, 0, 0, 0, 0, block_fps]
-
-            if SYSPARAMS.board == 'm':
-                MATLABAomControl32('MarkFrame#')
-            else:
-                # marks the video frame when the subject responds.
-                netcomm('write', SYSPARAMS.netcommobj, np.int8('MarkFrame#'))
-                
-           
-            self.tk_save_pupil_tracking_button.configure(text='Recording Pupil ...', command=self.tk_recording_pupil)
-            
-       
-    def tk_recording_pupil(self):
-        if self.PupilParam.video and self.PupilParam.pupil_tracking_flag:
-            self.PupilParam.pupil_tracking_flag = False
-            
-            PupilData = {
-                'Data': self.PupilParam.pupil_tracking_Data,
-                'Pixel_calibration': self.PupilParam.pixel_calibration
-            }
-            prefix = simpledialog.askstring("Input", "Enter Prefix:")  # Get prefix from user
-            self.save_pupil_data(prefix, PupilData)
-            self.PupilParam.reset_pupil_tracking_Data()
-            self.tk_save_pupil_tracking_button.configure(text='Save Pupil Tracking',  command=self.tk_save_pupil_tracking)
-        
     def tk_type_pupil_file_name_prefix(self):
         ROOT = tk.Tk()
         ROOT.withdraw()
@@ -767,10 +660,8 @@ end"""
             print("TCAmmX and TCAmmY updated.")
         else:
             print("Invalid input string.")
-
-
+            
     ######## sliders ###########
-
     def tk_brightness_change(self, val):
         """Slider 3: brightness slider moved"""
         self.CameraSettings.set_brightness(val)
@@ -799,7 +690,6 @@ end"""
         if self.PupilParam.video:
             self.camera.set(cv2.CAP_PROP_GAIN, val)
             print(val)
-  
 
     def set_camera_values(self):
         """used when setting values mid video"""
@@ -830,26 +720,15 @@ end"""
     def set_PupilTracker(self, value):
         self.PupilTracker = value
         
-    def save_trial_pupil_data(prefix, pupil_data):
-        """
-        Save trial pupil data to a file.
-        """
-        date_string = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        date_string = date_string.replace(' ', '_').replace(':', '_')
-        save_file_name = f'.\\VideoAndRef\\Trial_DataPupil_{prefix}_{date_string}.txt'
 
-        with open(save_file_name, 'w') as file:
-            for item in pupil_data:
-                file.write(f"{item}\n")
-
-
-    def save_pupil_data(prefix, pupil_data):
+    def save_pupil_data(self, file_name, pupil_data):
         """
         Save pupil data to a file.
         """
-        date_string = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        prefix = self.tk_type_pupil_file_name_prefix_entry.get()
+        date_string = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         date_string = date_string.replace(' ', '_').replace(':', '_')
-        save_file_name = f'.\\VideoAndRef\\{prefix}DataPupil_{date_string}.txt'
+        save_file_name = f'.\\VideoAndRef\\{prefix}]{file_name}{date_string}.txt'
 
         with open(save_file_name, 'w') as file:
             for item in pupil_data:
@@ -860,7 +739,7 @@ end"""
         """
         Save pupil video to a file.
         """
-        date_string = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        date_string = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         date_string = date_string.replace(' ', '_').replace(':', '_')
         save_file_name = f'.\\VideoAndRef\\{prefix}VideoPupil_{date_string}.avi'
 

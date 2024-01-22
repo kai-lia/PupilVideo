@@ -31,7 +31,7 @@ class PupilParam:
         self.flag = False
         self.BEflag = False
         self.pupil_tracking_flag = False
-        self.pupil_tracking_Data = None
+        self.pupil_tracking_Data = []
 
         # video state
         self.video = False # if video is on

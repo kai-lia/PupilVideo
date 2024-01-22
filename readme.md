@@ -1,8 +1,5 @@
 <!-- Improved compatibility of back to top link: See: https://github.com/othneildrew/Best-README-Template/pull/73 -->
 <a name="readme-top"></a>
-
-
-
   <h3 align="center">Pupil Video Tracking</h3>
 
   <p align="center">
@@ -47,20 +44,19 @@
   </ol>
 </details>
 
-
-
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
 Original Code Matlab: https://github.com/Roorda-Tuten-Labs/AOMcontrol
 
-Here's why:
+Why Change in code:
 * Running too many Matlab Dependencies at the same time 
 * Better Documentation
 
 If checking out the orginal code here is a translation guide
+Major changes from original code are in PupilVideoAlg also nameing conventions and coding style 
 
-Buttons 
+### Buttons
 | Original Matlab | Current Code |
 | ----------- | ----------- |
 | Button 1 | Quit |
@@ -79,7 +75,7 @@ Buttons
 | Button 16 | Zoom In |
 | Button 21 | Show Focus |
 
-Slider Translations 
+### Slider Translations
 
 | Original Matlab | Current Code |
 | ----------- | ----------- |
@@ -88,7 +84,7 @@ Slider Translations
 | Slider 5 | Exposure |
 | Slider 6 | Gain |
 
-Edit Translations
+### Edit Translations
 
 | Original Matlab | Current Code |
 | ----------- | ----------- |
@@ -98,16 +94,7 @@ Edit Translations
 | Edit 6 | calibrations/tollernc(.mm) |
 | Edit 7 | TCA |
 
-
-
-
-
-
 ### Imported Libraries
-
-
-
-
 <!-- GETTING STARTED -->
 ## Getting Started
 
@@ -117,10 +104,6 @@ To get a local copy up and running follow these simple example steps.
 ### Prerequisites
 
 This is an example of how to list things you need to use the software and how to install them.
-* npm
-  ```sh
-  npm install npm@latest -g
-  ```
 
 ### Installation
 
@@ -150,10 +133,29 @@ See the [open issues](https://github.com/othneildrew/Best-README-Template/issues
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
-
-
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+# gui.py
+used tkinter to make interface
+## Frame Making 
+all functions in here are just for interface, not much logic happeing, if error in dimensionality check here, else check buttons
+### make_top_frame
+### make_left_frame
+### make_right_frame
+### make_middle_frame
+
+## Buttons
+
+## Sliders
+
+## Text Box
+
+# PupilTrackingAlg.py
+
+
+
+
+
 
 
 
@@ -169,7 +171,4 @@ Kaiona Martinson - [@kai-lia](https://github.com/kai-lia) - martinson.kaiona(@be
 
 <!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
-
-Use this space to list resources you find helpful and would like to give credit to. I've included a few of my favorites to kick things off!
-
-
+no more optics code please 
