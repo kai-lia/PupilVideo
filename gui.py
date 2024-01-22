@@ -369,6 +369,7 @@ class ProjectorGUI:
             self.ax.plot([self.PupilParam.x1, self.PupilParam.x2], [self.PupilParam.y1, self.PupilParam.y2])
             
             self.ax.add_patch(track_rect)
+        
             
         if self.PupilParam.show_reference:
             width = self.PupilParam.ref_x2 - self.PupilParam.ref_x1  # Width of the rectangle
@@ -376,6 +377,27 @@ class ProjectorGUI:
             # Create a Rectangle patch
             ref_rect = patches.Rectangle((self.PupilParam.ref_x1, self.PupilParam.ref_y1), width, height, linewidth=1,edgecolor='b', fill=False)
             self.ax.add_patch(ref_rect)
+            
+        if self.PupilParam.BEflag:
+            H1 = int(round(self.PupilParam.frame_height / 2))
+            V1 = int(round(self.PupilParam.frame_width / 2))
+            Dmm = int(1 * self.PupilParam.pixel_calibration)
+
+            # Update or create plot r1
+            self.PupilParam.r1, = plt.plot(range(self.PupilParam.frame_height), [V1] * self.PupilParam.frame_height, linewidth=6, color='red')
+
+            # Update or create plot r2
+            x_values_r2 = [x for x in range(H1 - Dmm, -1, -Dmm)] + [x for x in range(H1 + Dmm, self.PupilParam.frame_height, Dmm)]
+            self.PupilParam.r2, = plt.plot(x_values_r2, [V1] * len(x_values_r2), '+', linewidth=2, color='red')
+
+            # Update or create plot r3
+            self.PupilParam.r3, = plt.plot([H1] * self.PupilParam.frame_width, range(self.PupilParam.frame_width), linewidth=6, color='red')
+
+            # Update or create plot r4
+            y_values_r4 = [y for y in range(V1 - Dmm, -1, -Dmm)] + [y for y in range(V1 + Dmm, self.PupilParam.frame_width, Dmm)]
+            self.PupilParam.r4, = plt.plot([H1] * len(y_values_r4), y_values_r4, '+', linewidth=2, color='red')
+
+            
         
         self.ax.imshow(frame_rgb, aspect='auto')
         #TODO plot other aspects:
@@ -508,7 +530,7 @@ class ProjectorGUI:
         self.PupilParam.pupil_tracking_flag = True
         self.PupilParam.pupil_tracking_TO = datetime.now()
         block_fps = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        self.PupilParam.pupil_tracking_Data = [0, 0, 0, 0, 0, block_fps]
+        self.PupilParam.pupil_tracking_Data = [[0, 0, 0, 0, block_fps]]
             
         self.tk_save_pupil_tracking_button.configure(text='Recording Pupil ...', command=self.tk_recording_pupil)
         
@@ -518,7 +540,7 @@ class ProjectorGUI:
         if self.video:
             self.PupilParam.pupil_tracking_flag = False
             self.save_pupil_data("DataPupil_", self.PupilParam.pupil_tracking_Data)
-            self.PupilData.Pixel_calibration = self.PupilParam.Pixel_calibration # confusion but was in matlab code
+            self.PupilData.Pixel_calibration = self.PupilParam.pixel_calibration # confusion but was in matlab code
             self.PupilParam.pupil_tracking_Data = []
             self.tk_save_pupil_tracking_button.configure(text='Save Pupil Tracking',  command=self.tk_save_pupil_tracking)
             
@@ -726,6 +748,7 @@ class ProjectorGUI:
         Save pupil data to a file.
         """
         prefix = self.tk_type_pupil_file_name_prefix_entry.get()
+        
         date_string = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         date_string = date_string.replace(' ', '_').replace(':', '_')
         save_file_name = f'.\\VideoAndRef\\{prefix}]{file_name}{date_string}.txt'
