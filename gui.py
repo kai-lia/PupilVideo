@@ -517,7 +517,6 @@ class ProjectorGUI:
         self.tk_save_video_button.configure(text="Recording Video ...",command = self.tk_recording_video)
             
         if not self.PupilParam.pupil_tracking_flag:
-            print("\n\n\n\n HELLO \n\n\n\n")
             self.tk_save_pupil_tracking()
             
     def tk_recording_video(self):
