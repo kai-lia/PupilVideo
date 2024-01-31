@@ -433,27 +433,28 @@ def track_pupil_extquarter_reflection(image, is_graph):
     if len(contours) == 0:
         return 0, 0, 0, 0, -1
 
-    best_contour = None
-    best_sphericity = 0
-    best_size = 0
+    best_ellipse = None
+    best_ellipse_fit_quality = float('inf')  # Initialize with a high value
 
     for contour in contours:
-        area = cv2.contourArea(contour)
-        perimeter = cv2.arcLength(contour, True)
-        if perimeter == 0:
+        if len(contour) < 5:  # Ellipse fitting requires at least 5 points
             continue
 
-        circularity = 4 * np.pi * area / (perimeter**2)
+        ellipse = cv2.fitEllipse(contour)
+        
+        # Example metric: Difference between the axes lengths (lower values indicate more circular shapes)
+        axes_difference = abs(ellipse[1][0] - ellipse[1][1])
 
-        if circularity > best_sphericity or (
-            circularity == best_sphericity and area > best_size
-        ):
-            best_contour = contour
-            best_sphericity = circularity
-            best_size = area
+        if axes_difference < best_ellipse_fit_quality:
+            best_ellipse = ellipse
+            best_ellipse_fit_quality = axes_difference
 
-    if best_contour is None:
+    if best_ellipse is None:
         return 0, 0, 0, 0, -1
 
-    x, y, w, h = cv2.boundingRect(best_contour)
+    # Extracting the bounding box from the best-fitting ellipse
+    center, axes, angle = best_ellipse
+    box = cv2.boxPoints(best_ellipse)
+    box = np.int0(box)
+    x, y, w, h = cv2.boundingRect(box)
     return x, x + w, y, y + h, 0
